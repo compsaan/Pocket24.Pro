@@ -6267,10 +6267,10 @@
                     </div>
 
                     <div class="invite-section-label"><i class="fas fa-link"></i> <span data-i18n="referralLink">رابط الإحالة</span></div>
-                    <div class="invite-copy copy-field"><input type="text" id="referralLinkInput" readonly><button class="copy-btn" id="copyLinkBtn"><i class="far fa-copy"></i> <span data-i18n="copy">نسخ</span></button></div>
+                    <div class="invite-copy copy-field"><input type="text" id="referralLinkInput" readonly><button type="button" class="copy-btn" id="copyLinkBtn"><i class="far fa-copy"></i> <span data-i18n="copy">نسخ</span></button></div>
 
                     <div class="invite-section-label"><i class="fas fa-hashtag"></i> <span data-i18n="referralCode">كود الإحالة</span></div>
-                    <div class="invite-copy copy-field"><input type="text" id="referralCodeInput" readonly><button class="copy-btn" id="copyCodeBtn"><i class="far fa-copy"></i> <span data-i18n="copy">نسخ</span></button></div>
+                    <div class="invite-copy copy-field"><input type="text" id="referralCodeInput" readonly><button type="button" class="copy-btn" id="copyCodeBtn"><i class="far fa-copy"></i> <span data-i18n="copy">نسخ</span></button></div>
 
                     <div class="invite-share-grid">
                         <a class="invite-share wa" id="shareWaBtn"><i class="fab fa-whatsapp"></i>WhatsApp</a>
@@ -7478,35 +7478,6 @@
             });
 
             // ==================== STORAGE ====================
-            /*
-             * One-time browser reset for the latest hosted build.
-             *
-             * The previous version kept accounts and the active session in
-             * localStorage, so a hosted copy on the same domain could reopen
-             * an old account.  Run this only once for this release: remove
-             * Pocket24 data from the browser, including the old session mirror,
-             * then let the user register or log in again from the server.
-             *
-             * The marker intentionally lives outside the pocket24 namespace,
-             * because clearAllLocalData() removes that namespace on logout.
-             */
-            (function resetLegacyBrowserDataOnce() {
-                const RESET_MARKER = '__pocket24_latest_build_reset_v2__';
-                try {
-                    if (localStorage.getItem(RESET_MARKER) === '1') return;
-                    const keysToRemove = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && (key.indexOf('pocket24') === 0 || key.indexOf('p24_') === 0)) {
-                            keysToRemove.push(key);
-                        }
-                    }
-                    keysToRemove.forEach(function(key) { localStorage.removeItem(key); });
-                    localStorage.setItem(RESET_MARKER, '1');
-                } catch (e) {}
-                try { sessionStorage.clear(); } catch (e) {}
-            })();
-
              const STORAGE_KEYS = { ACCOUNT: 'pocket24_user_account', ACCOUNTS: 'pocket24_user_accounts',
                  ACTIVE_USER: 'pocket24_active_user', SESSION: 'pocket24_logged_in',
                  REFERRAL_STATS: 'pocket24_referral_stats', BALANCE_HIDDEN: 'pocket24_balance_hidden' };
@@ -7775,7 +7746,7 @@
                 const acc = getSavedAccount();
                 if (acc) {
                     if (!acc.referralCode) { acc.referralCode = generateReferralCode();
-                        acc.referralLink = `https://compsaan.github.io/Pockett24.Pro/?ref=${acc.referralCode}`; }
+                        acc.referralLink = `https://compsaan.github.io/Pocket24.Pro/?ref=${acc.referralCode}`; }
                     if (!acc.userId) acc.userId = generateUserId();
                     ensureDepositAddresses(acc);
                     if (acc.totalDeposits === undefined) acc.totalDeposits = 0.00;
@@ -7800,13 +7771,41 @@
                 showWelcomeScreen();
             }
 
-            function updateInviteModalContent() {
+             async function copyTextToClipboard(text) {
+                 const value = String(text || '');
+                 if (!value) return false;
+                 try {
+                     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                         await navigator.clipboard.writeText(value);
+                         return true;
+                     }
+                 } catch (_) {}
+                 try {
+                     const textarea = document.createElement('textarea');
+                     textarea.value = value;
+                     textarea.setAttribute('readonly', '');
+                     textarea.style.position = 'fixed';
+                     textarea.style.opacity = '0';
+                     textarea.style.pointerEvents = 'none';
+                     document.body.appendChild(textarea);
+                     textarea.focus();
+                     textarea.select();
+                     textarea.setSelectionRange(0, textarea.value.length);
+                     const copied = document.execCommand('copy');
+                     document.body.removeChild(textarea);
+                     return copied;
+                 } catch (_) {
+                     return false;
+                 }
+             }
+
+             function updateInviteModalContent() {
                 const acc = getSavedAccount();
                 if (!acc) return;
                 const stats = getReferralStats();
                 const refLinkInput = document.getElementById('referralLinkInput');
                 if (refLinkInput) refLinkInput.value = acc.referralLink ||
-                    `https://compsaan.github.io/Pockett24.Pro/?ref=${acc.referralCode || 'DEMO'}`;
+                    `https://compsaan.github.io/Pocket24.Pro/?ref=${acc.referralCode || 'DEMO'}`;
                 const refCodeInput = document.getElementById('referralCodeInput');
                 if (refCodeInput) refCodeInput.value = acc.referralCode || 'POCKET24DEMO';
                 const totalRefEl = document.getElementById('totalReferrals');
@@ -7828,7 +7827,10 @@
                             e.preventDefault();
                             try {
                                 if (navigator.share) await navigator.share({ title:'Pocket24', text:'انضم إلى Pocket24', url: link });
-                                else { await navigator.clipboard.writeText(link); }
+                                 else {
+                                     const copied = await copyTextToClipboard(link);
+                                     if (copied) showToast('تم نسخ الرابط!', true);
+                                 }
                             } catch(_){}
                         };
                     }
@@ -9490,7 +9492,7 @@
                     frozenBalance: 0.00
                 };
                 acc.referralCode = generateReferralCode();
-                acc.referralLink = `https://compsaan.github.io/Pockett24.Pro/?ref=${acc.referralCode}`;
+                acc.referralLink = `https://compsaan.github.io/Pocket24.Pro/?ref=${acc.referralCode}`;
                 // Use the new addresses from FIXED_DEPOSIT_ADDRESSES
                 acc.depositAddresses = generateRandomDepositAddresses();
                 saveAccount(acc);
@@ -9641,12 +9643,28 @@
                 updateDepositModalContent();
             }));
 
-            document.getElementById('copyLinkBtn')?.addEventListener('click', () => { navigator.clipboard?.writeText(
-                    document.getElementById('referralLinkInput').value);
-                showToast('تم نسخ الرابط!', true); });
-            document.getElementById('copyCodeBtn')?.addEventListener('click', () => { navigator.clipboard?.writeText(
-                    document.getElementById('referralCodeInput').value);
-                showToast('تم نسخ الكود!', true); });
+            document.getElementById('copyLinkBtn')?.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const input = document.getElementById('referralLinkInput');
+                const copied = await copyTextToClipboard(input ? input.value : '');
+                if (copied) {
+                    if (input) { input.focus(); input.select(); }
+                    showToast('تم نسخ الرابط!', true);
+                } else {
+                    showToast('تعذر النسخ تلقائياً، حدّد الرابط وانسخه يدوياً.', false);
+                }
+            });
+            document.getElementById('copyCodeBtn')?.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const input = document.getElementById('referralCodeInput');
+                const copied = await copyTextToClipboard(input ? input.value : '');
+                if (copied) {
+                    if (input) { input.focus(); input.select(); }
+                    showToast('تم نسخ الكود!', true);
+                } else {
+                    showToast('تعذر النسخ تلقائياً، حدّد الكود وانسخه يدوياً.', false);
+                }
+            });
 
             ['backFromTradeBtn', 'backFromWalletBtn', 'backFromMarketBtn', 'backFromAdminBtn', 'backFromVipBtn', 'backFromAssetsBtn'].forEach(
                 id => document.getElementById(id)?.addEventListener('click', showMainApp));
@@ -10566,7 +10584,7 @@
                 }
                 if (!acc.referralCode) {
                     acc.referralCode = generateReferralCode();
-                    acc.referralLink = 'https://compsaan.github.io/Pockett24.Pro/?ref=' + acc.referralCode;
+                    acc.referralLink = 'https://compsaan.github.io/Pocket24.Pro/?ref=' + acc.referralCode;
                 }
                 acc.availableBalance = +(parseFloat(acc.todayProfit || 0) || 0).toFixed(2);
                 saveAccount(acc);
