@@ -7478,6 +7478,35 @@
             });
 
             // ==================== STORAGE ====================
+            /*
+             * One-time browser reset for the latest hosted build.
+             *
+             * The previous version kept accounts and the active session in
+             * localStorage, so a hosted copy on the same domain could reopen
+             * an old account.  Run this only once for this release: remove
+             * Pocket24 data from the browser, including the old session mirror,
+             * then let the user register or log in again from the server.
+             *
+             * The marker intentionally lives outside the pocket24 namespace,
+             * because clearAllLocalData() removes that namespace on logout.
+             */
+            (function resetLegacyBrowserDataOnce() {
+                const RESET_MARKER = '__pocket24_latest_build_reset_v2__';
+                try {
+                    if (localStorage.getItem(RESET_MARKER) === '1') return;
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.indexOf('pocket24') === 0 || key.indexOf('p24_') === 0)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(function(key) { localStorage.removeItem(key); });
+                    localStorage.setItem(RESET_MARKER, '1');
+                } catch (e) {}
+                try { sessionStorage.clear(); } catch (e) {}
+            })();
+
              const STORAGE_KEYS = { ACCOUNT: 'pocket24_user_account', ACCOUNTS: 'pocket24_user_accounts',
                  ACTIVE_USER: 'pocket24_active_user', SESSION: 'pocket24_logged_in',
                  REFERRAL_STATS: 'pocket24_referral_stats', BALANCE_HIDDEN: 'pocket24_balance_hidden' };
