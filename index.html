@@ -7502,6 +7502,25 @@
                 try { sessionStorage.clear(); } catch (e) {}
                 if (keepLang !== false && lang) { try { localStorage.setItem('pocket24_lang', lang); } catch (e) {} }
             }
+
+            /* ==================== GLOBAL SESSION RESET (SESSION EPOCH) ====================
+             * Bump SESSION_EPOCH to force-log-out every device that still holds an
+             * old/stuck session. On the first load after a bump, all local pocket24
+             * data is wiped and the device returns to the welcome screen, so every
+             * account must sign in again against the server tables.
+             */
+            const SESSION_EPOCH = '2026-08-23-full-logout-1';
+            const SESSION_EPOCH_KEY = 'pocket24_session_epoch';
+
+            function enforceSessionEpoch() {
+                var stored = null;
+                try { stored = localStorage.getItem(SESSION_EPOCH_KEY); } catch (e) {}
+                if (stored === SESSION_EPOCH) return false;
+                clearAllLocalData(true);
+                try { localStorage.setItem(STORAGE_KEYS.SESSION, 'false'); } catch (e) {}
+                try { localStorage.setItem(SESSION_EPOCH_KEY, SESSION_EPOCH); } catch (e) {}
+                return true;
+            }
             const welcomeScreen = document.getElementById('welcomeScreen'),
                 mainApp = document.getElementById('mainApp'),
                 tradePage = document.getElementById('tradePage'),
@@ -10451,13 +10470,14 @@
             });
 
             function checkInitialState() {
+                const wasReset = enforceSessionEpoch();
                 applyLanguageToDOM();
                 applyDarkMode();
                 updateOnlineStatus();
                 updateBalanceDisplay();
 
                 const acc = getSavedAccount();
-                if (isLoggedIn() && acc) {
+                if (!wasReset && isLoggedIn() && acc) {
                     enterMainApp();
                     setTimeout(hideSplash, 2200);
                 } else {
