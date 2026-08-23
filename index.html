@@ -6037,7 +6037,7 @@
                 <div class="vip-grid" id="vipOffersContainer"></div>
                 <div class="vip-footer-note">
                     <i class="fas fa-shield-alt"></i> جميع الاشتراكات صالحة لمدة <strong>30 يومًا</strong> فقط.<br>
-                    <i class="fas fa-coins"></i> الحد الأدنى للإيداع: <strong>75$</strong> · أرباح يومية مضمونة <strong>20%</strong> يوميًا.<br>
+                    <i class="fas fa-coins"></i> لا يوجد حد أدنى للإيداع · أرباح يومية مضمونة <strong>20%</strong> يوميًا.<br>
                     <i class="fas fa-lock"></i> رأس المال محمي بالكامل &nbsp;·&nbsp; <i class="fas fa-headset"></i> دعم 24/7
                 </div>
             </div>
@@ -6215,7 +6215,7 @@
                 <div id="depositNetworkContent"></div>
                 <div class="warning-note">
                     <i class="fas fa-exclamation-triangle" style="font-size:18px;"></i>
-                    <span data-i18n="depositWarning">تأكد من اختيار الشبكة الصحيحة. إرسال العملات عبر شبكة خاطئة سيؤدي إلى فقدانها. الحد الأدنى للإيداع: 75 USDT.</span>
+                    <span data-i18n="depositWarning">تأكد من اختيار الشبكة الصحيحة. إرسال العملات عبر شبكة خاطئة سيؤدي إلى فقدانها. لا يوجد حد أدنى للإيداع.</span>
                 </div>
             </div>
         </div>
@@ -7016,10 +7016,10 @@
                     personalInfo: 'الملف الشخصي',
                     notifications: 'الإشعارات',
                     depositCrypto: 'إيداع العملات الرقمية',
-                    depositWarning: 'تأكد من اختيار الشبكة الصحيحة. إرسال العملات عبر شبكة خاطئة سيؤدي إلى فقدانها. الحد الأدنى للإيداع: 75 USDT.',
+                    depositWarning: 'تأكد من اختيار الشبكة الصحيحة. إرسال العملات عبر شبكة خاطئة سيؤدي إلى فقدانها. لا يوجد حد أدنى للإيداع.',
                     depositAmountLabel: 'قيمة الإيداع (USDT)',
                     confirmDeposit: 'تأكيد الإيداع',
-                    depositMinError: 'الحد الأدنى للإيداع هو 75 USDT',
+                    depositMinError: 'يرجى إدخال مبلغ صحيح',
                     depositConfirmed: 'تم تأكيد إيداع {amount} USDT بنجاح',
                     referralLink: 'رابط الإحالة',
                     referralCode: 'كود الإحالة',
@@ -7153,10 +7153,10 @@
                     personalInfo: 'Personal Profile',
                     notifications: 'Notifications',
                     depositCrypto: 'Crypto Deposit',
-                    depositWarning: 'Make sure to select the correct network. Sending funds via the wrong network will result in permanent loss. Minimum deposit: 75 USDT.',
+                    depositWarning: 'Make sure to select the correct network. Sending funds via the wrong network will result in permanent loss. No minimum deposit.',
                     depositAmountLabel: 'Deposit amount (USDT)',
                     confirmDeposit: 'Confirm Deposit',
-                    depositMinError: 'Minimum deposit is 75 USDT',
+                    depositMinError: 'Please enter a valid amount',
                     depositConfirmed: 'Deposit of {amount} USDT confirmed successfully',
                     referralLink: 'Referral Link',
                     referralCode: 'Referral Code',
@@ -7290,10 +7290,10 @@
                     personalInfo: 'Profil personnel',
                     notifications: 'Notifications',
                     depositCrypto: 'Dépôt de crypto',
-                    depositWarning: "Assurez-vous de sélectionner le bon réseau. L'envoi de fonds via le mauvais réseau entraîne une perte permanente. Dépôt minimum: 75 USDT.",
+                    depositWarning: "Assurez-vous de sélectionner le bon réseau. L'envoi de fonds via le mauvais réseau entraîne une perte permanente. Aucun dépôt minimum.",
                     depositAmountLabel: 'Montant du dépôt (USDT)',
                     confirmDeposit: 'Confirmer le dépôt',
-                    depositMinError: 'Le dépôt minimum est de 75 USDT',
+                    depositMinError: 'Veuillez saisir un montant valide',
                     depositConfirmed: 'Dépôt de {amount} USDT confirmé avec succès',
                     referralLink: 'Lien de parrainage',
                     referralCode: 'Code de parrainage',
@@ -8053,7 +8053,7 @@
                         <button class="btn-secondary" id="copyDepositAddressBtn" style="width:100%;margin-bottom:14px;">${t('copyAddress')}</button>
                         <div class="input-group" style="text-align:right;">
                             <label for="depositAmountInput" style="display:block;margin-bottom:6px;color:var(--text-muted);">${t('depositAmountLabel')}</label>
-                            <input class="input-field" type="number" min="75" step="0.01" id="depositAmountInput" placeholder="75.00" style="width:100%;">
+                            <input class="input-field" type="number" min="0" step="0.01" id="depositAmountInput" placeholder="0.00" style="width:100%;">
                         </div>
                         <button class="btn-primary" id="confirmDepositBtn" style="width:100%;margin-top:10px;">
                             <i class="fas fa-check-circle" style="margin-inline-end:6px;"></i>${t('confirmDeposit')}
@@ -8066,7 +8066,7 @@
                 document.getElementById('confirmDepositBtn')?.addEventListener('click', () => {
                     const input = document.getElementById('depositAmountInput');
                     const amount = parseFloat(input?.value || '0');
-                    if (!amount || amount < 75) {
+                    if (!amount || amount <= 0) {
                         showToast(t('depositMinError'), false);
                         return;
                     }
@@ -8955,7 +8955,7 @@
                             var _amtEl = document.getElementById('wdepAmountInput');
                             var _amt = parseFloat(_amtEl && _amtEl.value || '0');
                             if (!_amt || _amt < 10) {
-                                showToast((t('depositMinError')||'الحد الأدنى للإيداع 10 USDT') + ' — تحقّق من قيمة المبلغ', true, 'error');
+                                showToast((t('depositMinError')||'يرجى إدخال مبلغ صحيح') + ' — تحقّق من قيمة المبلغ', true, 'error');
                                 return;
                             }
                              var _request = createDepositRequest(_amt, currentDepositNetwork, addr);
