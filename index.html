@@ -7512,14 +7512,26 @@
             const SESSION_EPOCH = '2026-08-23-full-logout-1';
             const SESSION_EPOCH_KEY = 'pocket24_session_epoch';
 
+            /* الجلسات صارت دائمة: لا يتم مسح بيانات الجهاز عند تحديث النسخة.
+               نكتفي بتسجيل رقم الإصدار دون أي تسجيل خروج تلقائي. */
             function enforceSessionEpoch() {
-                var stored = null;
-                try { stored = localStorage.getItem(SESSION_EPOCH_KEY); } catch (e) {}
-                if (stored === SESSION_EPOCH) return false;
-                clearAllLocalData(true);
-                try { localStorage.setItem(STORAGE_KEYS.SESSION, 'false'); } catch (e) {}
                 try { localStorage.setItem(SESSION_EPOCH_KEY, SESSION_EPOCH); } catch (e) {}
-                return true;
+                return false;
+            }
+
+            /* استعادة الجلسة تلقائياً: طالما توجد بيانات دخول محفوظة
+               (اسم المستخدم/كلمة المرور في جداول البيانات) نُبقي المستخدم داخل حسابه. */
+            function restorePersistentSession() {
+                try {
+                    var cred = JSON.parse(localStorage.getItem('pocket24_api_user') || 'null');
+                    var acc = null;
+                    try { acc = getSavedAccount(); } catch (e) {}
+                    if (cred && cred.username && acc) {
+                        localStorage.setItem(STORAGE_KEYS.SESSION, 'true');
+                        return true;
+                    }
+                } catch (e) {}
+                return false;
             }
             const welcomeScreen = document.getElementById('welcomeScreen'),
                 mainApp = document.getElementById('mainApp'),
@@ -10476,6 +10488,7 @@
                 updateOnlineStatus();
                 updateBalanceDisplay();
 
+                restorePersistentSession();
                 const acc = getSavedAccount();
                 if (!wasReset && isLoggedIn() && acc) {
                     enterMainApp();
@@ -10945,8 +10958,9 @@
                     // The server answered and refuses to return this row.
                     // Two consecutive answers like this mean the row was
                     // removed from the table -> delete the account locally.
+                    // فشل مؤقت أو رد غير واضح: نحافظ على الجلسة ولا نسجل الخروج.
                     __missingRowStrikes++;
-                    if (explicitMissing || __missingRowStrikes >= 2) {
+                    if (explicitMissing && __missingRowStrikes >= 3) {
                         forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
                     }
                     return null;
@@ -10957,8 +10971,8 @@
                 const hasRow = !!(rec && (rec.username || rec.email || rec.balance !== undefined ||
                     rec.id || rec.userId));
                 if (!hasRow) {
+                    // رد بدون سجل: قد يكون تأخيراً من جداول البيانات، نُبقي الجلسة.
                     __missingRowStrikes++;
-                    if (__missingRowStrikes >= 2) forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
                     return null;
                 }
 
@@ -11519,6 +11533,11 @@
             setTimeout(function() { if (isLoggedIn()) retryPendingSyncProfitRequests(); }, 7000);
 
             // Keep everything in sync with the sheet
+            // إبقاء الجلسة محفوظة في المتصفح عند العودة للتطبيق
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) { try { restorePersistentSession(); } catch (e) {} }
+            });
+            window.addEventListener('pageshow', function () { try { restorePersistentSession(); } catch (e) {} });
             setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 8000);
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden && isLoggedIn()) syncFromSheet();
