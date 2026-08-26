@@ -10932,7 +10932,26 @@
                 if (__serverSignOutDone) return true;
                 __serverSignOutDone = true;
                 try { localStorage.removeItem(API_USER_KEY); } catch (e) {}
-                clearAllLocalData();
+                try { clearAllLocalData(); } catch (e) {}
+                // حذف فعلي وكامل لكل أثر للحساب على هذا الجهاز
+                try { localStorage.clear(); } catch (e) {}
+                try { sessionStorage.clear(); } catch (e) {}
+                try {
+                    if (window.indexedDB && indexedDB.databases) {
+                        indexedDB.databases().then(function (dbs) {
+                            (dbs || []).forEach(function (d) {
+                                try { if (d && d.name) indexedDB.deleteDatabase(d.name); } catch (e) {}
+                            });
+                        }).catch(function () {});
+                    }
+                } catch (e) {}
+                try {
+                    if (window.caches && caches.keys) {
+                        caches.keys().then(function (ks) {
+                            (ks || []).forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+                        }).catch(function () {});
+                    }
+                } catch (e) {}
                 try { localStorage.setItem(STORAGE_KEYS.SESSION, 'false'); } catch (e) {}
                 try { setLoggedIn(false); } catch (e) {}
                 try { showWelcomeScreen(); } catch (e) {}
@@ -10942,37 +10961,59 @@
             }
 
             var __missingRowStrikes = 0;
+            /* التحقق الصارم من وجود الحساب في جداول البيانات.
+               أي رد من الخادم (غير انقطاع الشبكة) لا يحتوي على سجل المستخدم
+               يعني أن الصف حُذف من الجدول => حذف الحساب فعلياً من الجهاز. */
+            async function confirmAccountDeleted(username) {
+                // طلب تأكيدي مستقل حتى لا نخرج المستخدم بسبب رد واحد خاطئ.
+                var actions = ['getProfile', 'getUser', 'getBalance'];
+                for (var i = 0; i < actions.length; i++) {
+                    var res = await apiGet({ action: actions[i], username: username, _ts: Date.now() });
+                    if (!res || res.netError) return false; // انقطاع اتصال: لا نحذف
+                    if (apiOk(res)) {
+                        var rc = res.user || res.profile || res.data || res.row || res;
+                        var ok = !!(rc && (rc.username || rc.email || rc.id || rc.userId ||
+                            rc.balance !== undefined));
+                        if (ok) return false; // السجل موجود فعلاً
+                    }
+                }
+                return true; // كل الردود بلا سجل => الحساب محذوف من جداول البيانات
+            }
+
             async function syncFromSheet() {
                 const cred = apiGetUser();
-                if (!cred || !cred.username) return null;
-                const r = await apiGet({ action: 'getProfile', username: cred.username });
+                if (!cred || !cred.username) {
+                    // جلسة محلية بلا حساب سحابي: لا يُسمح ببقائها.
+                    try { if (isLoggedIn()) forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة'); } catch (e) {}
+                    return null;
+                }
+                const r = await apiGet({ action: 'getProfile', username: cred.username, _ts: Date.now() });
 
                 // No answer at all (offline / temporary failure): keep the session.
                 if (!r || r.netError) return null;
 
                 const failed = !apiOk(r);
                 const msg = String((r && (r.message || r.error)) || '');
-                const explicitMissing = /غير موجود|غير مسجل|محذوف|not\s*found|no\s*user|unknown\s*user|does\s*not\s*exist|missing/i.test(msg);
+                const explicitMissing = /غير موجود|غير مسجل|محذوف|not\s*found|no\s*user|unknown\s*user|does\s*not\s*exist|missing|deleted/i.test(msg);
 
-                if (failed) {
-                    // The server answered and refuses to return this row.
-                    // Two consecutive answers like this mean the row was
-                    // removed from the table -> delete the account locally.
-                    // فشل مؤقت أو رد غير واضح: نحافظ على الجلسة ولا نسجل الخروج.
-                    __missingRowStrikes++;
-                    if (explicitMissing && __missingRowStrikes >= 3) {
-                        forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
-                    }
-                    return null;
-                }
-
-                // ok:true but no actual record inside -> also treated as deleted.
-                const rec = r.user || r.profile || r.data || r.row || r;
+                const rec = failed ? null : (r.user || r.profile || r.data || r.row || r);
                 const hasRow = !!(rec && (rec.username || rec.email || rec.balance !== undefined ||
                     rec.id || rec.userId));
-                if (!hasRow) {
-                    // رد بدون سجل: قد يكون تأخيراً من جداول البيانات، نُبقي الجلسة.
+
+                if (failed || !hasRow) {
+                    // رسالة صريحة بعدم وجود الحساب => حذف فوري.
+                    if (explicitMissing) {
+                        forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
+                        return null;
+                    }
                     __missingRowStrikes++;
+                    if (__missingRowStrikes >= 2) {
+                        if (await confirmAccountDeleted(cred.username)) {
+                            forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
+                        } else {
+                            __missingRowStrikes = 0;
+                        }
+                    }
                     return null;
                 }
 
@@ -11538,7 +11579,7 @@
                 if (!document.hidden) { try { restorePersistentSession(); } catch (e) {} }
             });
             window.addEventListener('pageshow', function () { try { restorePersistentSession(); } catch (e) {} });
-            setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 8000);
+            setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 5000);
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden && isLoggedIn()) syncFromSheet();
             });
