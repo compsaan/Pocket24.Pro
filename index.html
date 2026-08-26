@@ -10511,7 +10511,7 @@
             }
 
             // ==================== GOOGLE SHEETS API INTEGRATION (hidden) ====================
-            var API_TIMEOUT_MS = 15000;
+            var API_TIMEOUT_MS = 8000;
             function apiFetch(url, options) {
                 var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
                 var opts = Object.assign({}, options || {});
@@ -10961,68 +10961,78 @@
             }
 
             var __missingRowStrikes = 0;
-            /* التحقق الصارم من وجود الحساب في جداول البيانات.
-               أي رد من الخادم (غير انقطاع الشبكة) لا يحتوي على سجل المستخدم
-               يعني أن الصف حُذف من الجدول => حذف الحساب فعلياً من الجهاز. */
-            async function confirmAccountDeleted(username) {
-                // طلب تأكيدي مستقل حتى لا نخرج المستخدم بسبب رد واحد خاطئ.
-                var actions = ['getProfile', 'getUser', 'getBalance'];
-                for (var i = 0; i < actions.length; i++) {
-                    var res = await apiGet({ action: actions[i], username: username, _ts: Date.now() });
-                    if (!res || res.netError) return false; // انقطاع اتصال: لا نحذف
-                    if (apiOk(res)) {
-                        var rc = res.user || res.profile || res.data || res.row || res;
-                        var ok = !!(rc && (rc.username || rc.email || rc.id || rc.userId ||
-                            rc.balance !== undefined));
-                        if (ok) return false; // السجل موجود فعلاً
-                    }
+            var __sheetSyncBusy = false;
+
+            function _sheetIdentityRecord(res) {
+                if (!res || !apiOk(res)) return null;
+                var row = res.user || res.profile || res.data || res.row || null;
+                if (!row && (res.username || res.email || res.id || res.userId)) row = res;
+                if (!row || !(row.username || row.email || row.id || row.userId)) return null;
+                return row;
+            }
+
+            function _isMissingUserResponse(res) {
+                if (!res || res.netError) return false;
+                var msg = String((res.message || res.error || res.status || '')).trim();
+                return /غير موجود|غير مسجل|محذوف|لا يوجد|not\s*found|no\s*user|unknown\s*user|does\s*not\s*exist|missing|deleted|invalid\s*(user|account|credentials)/i.test(msg);
+            }
+
+            /* التحقق النهائي من جدول المستخدمين نفسه. الرصيد وحده لا يثبت وجود
+               حساب، لأن بعض إصدارات السكربت تعيد رصيداً صفرياً حتى للمستخدم المحذوف. */
+            async function confirmAccountDeleted(cred) {
+                if (!cred || !cred.username) return true;
+                var stamp = Date.now();
+                var checks = [
+                    apiGet({ action: 'getUser', username: cred.username, _ts: stamp }),
+                    apiPost({ action: 'login', username: cred.username, password: cred.password || '', _ts: stamp })
+                ];
+                var replies = await Promise.all(checks);
+                var onlineReplies = replies.filter(function(res) { return res && !res.netError; });
+                if (!onlineReplies.length) return false;
+                for (var i = 0; i < onlineReplies.length; i++) {
+                    if (_sheetIdentityRecord(onlineReplies[i])) return false;
                 }
-                return true; // كل الردود بلا سجل => الحساب محذوف من جداول البيانات
+                // وصل الخادم ولم يستطع أي فحص العثور على سجل مستخدم صالح.
+                return true;
             }
 
             async function syncFromSheet() {
-                const cred = apiGetUser();
-                if (!cred || !cred.username) {
-                    // جلسة محلية بلا حساب سحابي: لا يُسمح ببقائها.
-                    try { if (isLoggedIn()) forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة'); } catch (e) {}
-                    return null;
-                }
-                const r = await apiGet({ action: 'getProfile', username: cred.username, _ts: Date.now() });
-
-                // No answer at all (offline / temporary failure): keep the session.
-                if (!r || r.netError) return null;
-
-                const failed = !apiOk(r);
-                const msg = String((r && (r.message || r.error)) || '');
-                const explicitMissing = /غير موجود|غير مسجل|محذوف|not\s*found|no\s*user|unknown\s*user|does\s*not\s*exist|missing|deleted/i.test(msg);
-
-                const rec = failed ? null : (r.user || r.profile || r.data || r.row || r);
-                const hasRow = !!(rec && (rec.username || rec.email || rec.balance !== undefined ||
-                    rec.id || rec.userId));
-
-                if (failed || !hasRow) {
-                    // رسالة صريحة بعدم وجود الحساب => حذف فوري.
-                    if (explicitMissing) {
-                        forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
+                if (__sheetSyncBusy || __serverSignOutDone) return null;
+                __sheetSyncBusy = true;
+                try {
+                    const cred = apiGetUser();
+                    if (!cred || !cred.username) {
+                        if (isLoggedIn()) forceSignOutFromServer('لا توجد بيانات لهذا الحساب في جداول البيانات');
                         return null;
                     }
-                    __missingRowStrikes++;
-                    if (__missingRowStrikes >= 2) {
-                        if (await confirmAccountDeleted(cred.username)) {
-                            forceSignOutFromServer('تم حذف هذا الحساب من قبل الإدارة');
+                    const r = await apiGet({ action: 'getProfile', username: cred.username, _ts: Date.now() });
+                    // انقطاع الإنترنت وحده لا يحذف الحساب.
+                    if (!r || r.netError) return null;
+
+                    const rec = _sheetIdentityRecord(r);
+                    if (!rec) {
+                        // رد صريح بعدم الوجود أو رد ناجح بلا هوية يعني أن الصف غير موجود.
+                        if (_isMissingUserResponse(r) || apiOk(r)) {
+                            forceSignOutFromServer('تم حذف الحساب لعدم وجود بياناته في جداول البيانات');
+                            return null;
+                        }
+                        __missingRowStrikes++;
+                        // أول فشل غير صريح يُراجع فوراً عبر getUser و login بالتوازي.
+                        if (await confirmAccountDeleted(cred)) {
+                            forceSignOutFromServer('تم حذف الحساب لعدم وجود بياناته في جداول البيانات');
                         } else {
                             __missingRowStrikes = 0;
                         }
+                        return null;
                     }
-                    return null;
-                }
 
-                __missingRowStrikes = 0;
-                if (enforceServerAccountState(r)) return null;
-                // تحميل كامل بيانات الحساب من السحابة: إن لم يُرجع getProfile
-                // السجلات، نطلبها من الإجراءات المخصصة لكل جدول.
-                const full = await fetchAllUserRecords(cred.username, rec);
-                return applyServerUser(full, cred.password);
+                    __missingRowStrikes = 0;
+                    if (enforceServerAccountState(r)) return null;
+                    const full = await fetchAllUserRecords(cred.username, rec);
+                    return applyServerUser(full, cred.password);
+                } finally {
+                    __sheetSyncBusy = false;
+                }
             }
 
             // جلب كل جداول المستخدم (إيداعات/سحوبات/اشتراكات) من السحابة
@@ -11579,11 +11589,11 @@
                 if (!document.hidden) { try { restorePersistentSession(); } catch (e) {} }
             });
             window.addEventListener('pageshow', function () { try { restorePersistentSession(); } catch (e) {} });
-            setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 5000);
+            setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 3000);
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden && isLoggedIn()) syncFromSheet();
             });
-            setTimeout(function() { if (isLoggedIn()) syncFromSheet(); }, 300);
+            setTimeout(function() { if (isLoggedIn()) syncFromSheet(); }, 100);
             checkInitialState();
         })();
     </script>
