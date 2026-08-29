@@ -7618,20 +7618,9 @@
                 const day = String(d.getDate()).padStart(2, '0');
                 return d.getFullYear() + '-' + m + '-' + day;
             }
+            // كل الأرصدة والأرباح تأتي حصراً من جداول البيانات؛
+            // لا يتم أي تصفير أو تعديل محلي لها.
             function applyDailyProfitReset(account, persist) {
-                if (!account) return account;
-                const day = _currentProfitDay();
-                if (account.profitDay !== day) {
-                    const prev = parseFloat(account.todayProfit || 0) || 0;
-                    account.profitDay = day;
-                    account.todayProfit = 0.00;
-                    account.availableBalance = 0.00;
-                    if (prev > 0) {
-                        account.lastDayProfit = parseFloat(prev.toFixed(2));
-                        account.totalProfit = parseFloat(((account.totalProfit || 0) + prev).toFixed(2));
-                    }
-                    if (persist !== false) { try { saveAccount(account); } catch (e) {} }
-                }
                 return account;
             }
 
@@ -7660,7 +7649,7 @@
                 if (account && account.balance === undefined) account.balance = 0.00;
                 if (account && account.totalDeposits === undefined) account.totalDeposits = 0.00;
                 if (account && account.todayProfit === undefined) account.todayProfit = 0.00;
-                if (account && account.availableBalance === undefined) account.availableBalance = account.todayProfit || 0.00;
+                if (account && account.availableBalance === undefined) account.availableBalance = 0.00;
                 if (account && account.frozenBalance === undefined) account.frozenBalance = 0.00;
                 if (account && !account.profitDay) account.profitDay = _currentProfitDay();
                  if (account && !Array.isArray(account.vipSubscriptions)) account.vipSubscriptions = [];
@@ -7782,7 +7771,7 @@
                     ensureDepositAddresses(acc);
                     if (acc.totalDeposits === undefined) acc.totalDeposits = 0.00;
                     if (acc.todayProfit === undefined) acc.todayProfit = 0.00;
-                    if (acc.availableBalance === undefined) acc.availableBalance = acc.todayProfit || 0.00;
+                    if (acc.availableBalance === undefined) acc.availableBalance = 0.00;
                     if (acc.frozenBalance === undefined) acc.frozenBalance = 0.00;
                      const referralKey = STORAGE_KEYS.REFERRAL_STATS + '_' + acc.userId;
                      if (!localStorage.getItem(referralKey)) saveReferralStats({ total: 0, rewards: 0,
@@ -8019,7 +8008,7 @@
                      }
                      if (typeof onAccepted === 'function') onAccepted(result.tx);
                      else {
-                         container.innerHTML = '<div class="txid-success"><i class="fas fa-check-circle" style="margin-left:5px;"></i> تم إرسال TXID. بانتظار موافقة الإدارة على $' + parseFloat(result.tx.amount || 0).toFixed(2) + ' USDT إلى رصيدك فعلياً.</div>';
+                         container.innerHTML = '<div class="txid-success"><i class="fas fa-check-circle" style="margin-left:5px;"></i> تم إرسال TXID. بانتظار موافقة الإدارة على $' + parseFloat(result.tx.amount || 0).toFixed(2) + ' USDT قبل إضافته إلى رصيدك.</div>';
                      }
                  });
              }
@@ -8081,7 +8070,7 @@
                     try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch(e) {}
                     input.value = '';
                      renderDepositTxidConfirmation(contentDiv, request.tx, function(tx) {
-                         showToast('تم اعتماد TXID وإضافة $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى رصيدك', true, 'success');
+                         showToast('تم إرسال TXID لمبلغ $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى جداول البيانات — بانتظار موافقة الإدارة', true, 'info');
                          closeModal(document.getElementById('depositModal'));
                          try { if (typeof renderWalletTabContent === 'function') renderWalletTabContent(); } catch(e) {}
                      });
@@ -8476,7 +8465,7 @@
                     var _bal = _acc ? (_acc.balance || 0) : 0;
                     if (_amt > _bal) { showToast('الرصيد غير كافٍ في المحفظة', true); return; }
                     try { addWalletTransaction({type:'withdraw',amount:_amt,network:currentNetwork,currency:'USDT',symbol:'$',status:'pending',address:address}); } catch(e){}
-                    try { if (_acc) { _acc.balance = +(( _bal - _amt ).toFixed(2)); saveAccount(_acc); updateBalanceDisplay(); } } catch(e){}
+                    /* لا يُخصم أي رصيد محلياً — الرصيد يتحدّث من جداول البيانات بعد الاعتماد */
                     try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletTabContent')) renderWalletTabContent(); } catch(e){}
                     showToast(t('withdrawSuccess'), true);
                     closeModal(document.getElementById('withdrawModal'));
@@ -8612,6 +8601,13 @@
                 var ms = Math.max(0, remainMs);
                 _wtxTimers[id] = setTimeout(function(){
                     delete _wtxTimers[id];
+                    var _existing = getWalletTransactions().find(function(x){ return x.id===id; });
+                    if (_existing && _existing.type === 'deposit') {
+                        /* الإيداعات لا تكتمل محلياً أبداً — الاعتماد من جداول البيانات فقط */
+                        updateWalletTransaction(id, {status:'review', note:'بانتظار موافقة الإدارة على الإيداع'});
+                        try{ if(typeof renderWalletTabContent==='function' && document.getElementById('walletTabContent')) renderWalletTabContent(); }catch(e){}
+                        return;
+                    }
                     var tx = updateWalletTransaction(id, {status:'done', completedAt:Date.now()});
                     if(!tx) return;
                     var acc = getSavedAccount();
@@ -8640,9 +8636,8 @@
                      }
                     if(tx.status!=='pending') return;
                     if(tx.type!=='deposit') return; /* withdrawals stay pending (سحب معلق) */
-                    var waitMs = WITHDRAW_PENDING_MS;
-                    var remain = (tx.ts + waitMs) - now;
-                    scheduleWalletTxCompletion(tx.id, remain);
+                    /* لا يوجد إكمال تلقائي للإيداع: يبقى بانتظار موافقة جداول البيانات */
+                    updateWalletTransaction(tx.id, {status:'review', note:'بانتظار موافقة الإدارة على الإيداع'});
                 });
             }
             try { normalizeWalletTransactions(); resumePendingWalletTx(); } catch(e){}
@@ -8889,7 +8884,7 @@
                      var activeDepositRequest = getActiveDepositRequest();
                      if (activeDepositRequest) {
                          renderDepositTxidConfirmation(container, activeDepositRequest, function(tx) {
-                             showToast('تم اعتماد TXID وإضافة $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى رصيدك', true, 'success');
+                             showToast('تم إرسال TXID لمبلغ $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى جداول البيانات — بانتظار موافقة الإدارة', true, 'info');
                              try { renderWalletTabContent(); } catch(e) {}
                          });
                          return;
@@ -8968,7 +8963,7 @@
                              showToast('تم استلام طلب الإيداع — أدخل TXID خلال 48 ساعة', true, 'success');
                              try {
                                  renderDepositTxidConfirmation(container, _request.tx, function(tx) {
-                                     showToast('تم اعتماد TXID وإضافة $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى رصيدك', true, 'success');
+                                     showToast('تم إرسال TXID لمبلغ $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى جداول البيانات — بانتظار موافقة الإدارة', true, 'info');
                                      try { renderWalletTabContent(); } catch(e) {}
                                  });
                              } catch(e) {
@@ -9070,7 +9065,7 @@
                             var _wtx = addWalletTransaction({type:'withdraw',amount:_amt2,
                                 network:currentWdNetwork,currency:'USDT',symbol:'$',
                                 status:'pending',address:address});
-                            try { if (_acc2) { _acc2.balance = +(( _bal2 - _amt2 ).toFixed(2)); saveAccount(_acc2); updateBalanceDisplay(); } } catch(e){}
+                            /* لا يُخصم أي رصيد محلياً — الرصيد يتحدّث من جداول البيانات بعد الاعتماد */
                             showToast('تم تسجيل طلب السحب كـ "سحب معلق" — بانتظار المراجعة', true, 'success');
                             try { renderWalletTabContent(); } catch(e){}
                         } catch(err) {
@@ -10566,6 +10561,18 @@
             function apiOk(r) { return !!(r && (r.ok === true || r.status === 'success')); }
             function apiMsg(r, fallback) { return (r && (r.message || r.error)) || fallback; }
 
+            // قراءة قيمة رقمية من صف جداول البيانات (بأسماء حقول متعددة)
+            function _sheetNum(obj, keys) {
+                if (!obj) return 0;
+                for (var i = 0; i < keys.length; i++) {
+                    var v = obj[keys[i]];
+                    if (v === undefined || v === null || v === '') continue;
+                    var n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+                    if (!isNaN(n)) return +n.toFixed(2);
+                }
+                return 0;
+            }
+
             // Apply the sheet record onto the local session account
             function applyServerUser(u, password) {
                 if (!u) return null;
@@ -10575,8 +10582,15 @@
                     username: u.username || (existing && existing.username) || '',
                     email: u.email || (existing && existing.email) || '',
                     password: password || (existing && existing.password) || '',
-                    balance: parseFloat(u.balance || 0) || 0
+                    balance: _sheetNum(u, ['balance', 'totalBalance', 'wallet', 'walletBalance'])
                 });
+                // ===== الأرصدة والأرباح: المصدر الوحيد هو جداول البيانات =====
+                acc.todayProfit     = _sheetNum(u, ['todayProfit', 'dailyProfit', 'profitToday', 'todaysProfit', 'profit']);
+                acc.availableBalance = _sheetNum(u, ['availableBalance', 'available', 'freeBalance']);
+                acc.frozenBalance   = _sheetNum(u, ['frozenBalance', 'frozen', 'locked', 'lockedBalance']);
+                acc.totalProfit     = _sheetNum(u, ['totalProfit', 'profitTotal', 'allProfit']);
+                acc.teamProfit      = _sheetNum(u, ['teamProfit', 'referralProfit', 'teamEarnings']);
+                acc.totalDeposits   = _sheetNum(u, ['totalDeposits', 'deposits total', 'depositsTotal']);
                 if (Array.isArray(u.withdrawals)) { acc.sheetWithdrawals = u.withdrawals; }
                 if (Array.isArray(u.transactions)) { acc.sheetTransactions = u.transactions; }
                 // إعادة بناء الاشتراكات القادمة من جداول البيانات (جهاز جديد = لا يوجد سجل محلي)
@@ -10606,7 +10620,9 @@
                     u.deposits = realDeposits;
                     acc.sheetDeposits = realDeposits;
                     // اعتماد الإيداعات من جداول البيانات: تحديث السجل + الهامش
-                    acc.totalDeposits = sumApprovedSheetDeposits(realDeposits);
+                    if (!_sheetNum(u, ['totalDeposits', 'depositsTotal'])) {
+                        acc.totalDeposits = sumApprovedSheetDeposits(realDeposits);
+                    }
                     const last = realDeposits[realDeposits.length - 1];
                     if (last) {
                         acc.depositStatus = last.statusCode || last.status || '—';
@@ -10619,7 +10635,6 @@
                     acc.referralCode = generateReferralCode();
                     acc.referralLink = 'https://compsaan.github.io/Pocket24.Pro/?ref=' + acc.referralCode;
                 }
-                acc.availableBalance = +(parseFloat(acc.todayProfit || 0) || 0).toFixed(2);
                 saveAccount(acc);
                 // اعتماد الأرباح الموافق عليها في جداول البيانات -> تُضاف إلى "أرباح اليوم"
                 try { if (__pendingApprovalRows) applyApprovedSyncProfits(__pendingApprovalRows); } catch (e) {}
@@ -11226,11 +11241,72 @@
                 window.__sentDepositTxids = window.__sentDepositTxids || {};
                 if (window.__sentDepositTxids[txid]) return;
                 window.__sentDepositTxids[txid] = true;
-                sendDepositToSheet(amount, net, txid).then(function(r) {
-                    if (apiOk(r)) showToast('طلبك قيد المراجعة، سيتم إضافة الرصيد بعد موافقة الإدارة', true, 'success');
-                    else { delete window.__sentDepositTxids[txid]; showToast(apiMsg(r, 'تعذر إرسال طلب الإيداع'), true, 'error'); }
+                var _depTx = null;
+                try {
+                    _depTx = getWalletTransactions().filter(function (x) {
+                        return x.type === 'deposit' && String(x.txid || '').trim() === txid;
+                    }).pop() || null;
+                } catch (err) {}
+                if (!_depTx) _depTx = { id: null, txid: txid, amount: amount, network: net };
+                submitDepositApprovalRequest(_depTx).then(function(r) {
+                    if (apiOk(r)) showToast('تم إرسال طلب الإيداع إلى جداول البيانات — سيُضاف الرصيد بعد موافقة الإدارة فقط', true, 'success');
+                    else {
+                        delete window.__sentDepositTxids[txid];
+                        showToast(apiMsg(r, 'تعذر إرسال طلب الإيداع الآن — سنعيد المحاولة تلقائياً'), true, 'error');
+                    }
                 });
             }, true);
+
+            /* ===== إرسال طلب الإيداع إلى جداول البيانات مع إعادة المحاولة =====
+               الرصيد لا يُضاف محلياً إطلاقاً؛ يُضاف فقط عند الموافقة في الجدول. */
+            const DEP_RETRY_KEY = 'pocket24_pending_deposit_requests';
+            function _readDepRetryQueue() {
+                try { return JSON.parse(localStorage.getItem(DEP_RETRY_KEY) || '[]'); } catch (e) { return []; }
+            }
+            function _writeDepRetryQueue(list) {
+                try { localStorage.setItem(DEP_RETRY_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+            }
+            function queueDepositRetry(item) {
+                if (!item || !item.txid) return;
+                const list = _readDepRetryQueue().filter(function (x) { return x && x.txid !== item.txid; });
+                list.unshift(item);
+                _writeDepRetryQueue(list);
+            }
+            function removeDepositRetry(txid) {
+                _writeDepRetryQueue(_readDepRetryQueue().filter(function (x) { return x && x.txid !== txid; }));
+            }
+            async function submitDepositApprovalRequest(tx) {
+                if (!tx || !tx.txid) return { ok: false, message: 'TXID مفقود' };
+                const amount = parseFloat(tx.amount || 0) || 0;
+                const net = tx.network || 'trc20';
+                const r = await sendDepositToSheet(amount, net, tx.txid);
+                if (apiOk(r)) {
+                    try { updateWalletTransaction(tx.id, { sheetSent: true, sheetSentAt: Date.now() }); } catch (e) {}
+                    removeDepositRetry(tx.txid);
+                } else {
+                    queueDepositRetry({ id: tx.id, txid: tx.txid, amount: amount, network: net });
+                }
+                return r;
+            }
+            var __depRetryBusy = false;
+            async function retryPendingDepositRequests() {
+                if (__depRetryBusy) return;
+                const list = _readDepRetryQueue();
+                if (!list.length) return;
+                __depRetryBusy = true;
+                try {
+                    for (let i = 0; i < list.length; i++) {
+                        const item = list[i];
+                        const r = await sendDepositToSheet(item.amount, item.network, item.txid);
+                        if (apiOk(r)) {
+                            try { updateWalletTransaction(item.id, { sheetSent: true, sheetSentAt: Date.now() }); } catch (e) {}
+                            removeDepositRetry(item.txid);
+                        }
+                    }
+                } finally { __depRetryBusy = false; }
+            }
+            window.addEventListener('online', function () { retryPendingDepositRequests(); });
+            setInterval(function () { retryPendingDepositRequests(); }, 60000);
 
             // -------------------- SUBSCRIPTIONS (approval required from the sheet) --------------------
             function _apiUsername() {
@@ -11504,11 +11580,8 @@
 
             // إضافة ربح معتمد إلى "أرباح اليوم" + الرصيد المتاح + إجمالي الأرباح
             function creditTodayProfit(acc, amount) {
-                var v = parseFloat(amount) || 0;
-                if (!acc || !v) return;
-                acc.todayProfit = parseFloat(((parseFloat(acc.todayProfit || 0) || 0) + v).toFixed(2));
-                acc.availableBalance = parseFloat(((parseFloat(acc.availableBalance || 0) || 0) + v).toFixed(2));
-                acc.totalProfit = parseFloat(((parseFloat(acc.totalProfit || 0) || 0) + v).toFixed(2));
+                /* معطّل: لا تُضاف أي أرباح محلياً. المصدر الوحيد هو جداول البيانات. */
+                return;
             }
             window.creditTodayProfit = creditTodayProfit;
 
