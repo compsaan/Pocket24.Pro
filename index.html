@@ -7918,6 +7918,123 @@
                  return updated || tx;
              }
 
+
+             /* ═══ التحقق الفعلي من رمز المعاملة على الشبكة ═══
+                لا يُقبل أي TXID إلا إذا كانت المعاملة موجودة فعلياً على الشبكة
+                وتحتوي على نفس الكمية المطلوب إيداعها (يُسمح بالمعاملات القديمة).
+                ولا يُرسل أي أمر إلى جداول البيانات قبل قبول المنصة للرمز. */
+             var TXID_AMOUNT_TOLERANCE = 0.01;
+
+             function _txidUnits(raw, decimals) {
+                 var d = Number(decimals);
+                 if (!isFinite(d)) d = 6;
+                 var v = Number(String(raw || '0'));
+                 if (!isFinite(v)) return NaN;
+                 return v / Math.pow(10, d);
+             }
+
+             function _txidAmountsMatch(list, amount) {
+                 var target = parseFloat(amount || 0);
+                 for (var i = 0; i < list.length; i++) {
+                     var v = parseFloat(list[i]);
+                     if (isFinite(v) && Math.abs(v - target) <= TXID_AMOUNT_TOLERANCE) return true;
+                 }
+                 return false;
+             }
+
+             async function _txidFetchJson(url) {
+                 var ctrl = null;
+                 try { ctrl = new AbortController(); } catch (e) {}
+                 var timer = ctrl ? setTimeout(function(){ try { ctrl.abort(); } catch(e){} }, 12000) : null;
+                 try {
+                     var res = await fetch(url, { method: 'GET', signal: ctrl ? ctrl.signal : undefined,
+                         headers: { 'Accept': 'application/json' } });
+                     if (timer) clearTimeout(timer);
+                     if (!res.ok) return null;
+                     return await res.json();
+                 } catch (e) {
+                     if (timer) clearTimeout(timer);
+                     return null;
+                 }
+             }
+
+             /* TRON / TRC20 */
+             async function _txidLookupTron(txid) {
+                 var j = await _txidFetchJson('https://apilist.tronscanapi.com/api/transaction-info?hash=' +
+                     encodeURIComponent(txid));
+                 if (!j || (!j.hash && !j.contractRet && !j.trc20TransferInfo)) return null;
+                 var amounts = [];
+                 var arr = j.trc20TransferInfo || j.trc20TransferInfoList || [];
+                 for (var i = 0; i < arr.length; i++) {
+                     amounts.push(_txidUnits(arr[i].amount_str || arr[i].amount || arr[i].quant,
+                         arr[i].decimals != null ? arr[i].decimals : 6));
+                 }
+                 if (j.tokenTransferInfo) {
+                     amounts.push(_txidUnits(j.tokenTransferInfo.amount_str || j.tokenTransferInfo.amount,
+                         j.tokenTransferInfo.decimals != null ? j.tokenTransferInfo.decimals : 6));
+                 }
+                 if (j.contractData && j.contractData.amount != null && (!arr || !arr.length)) {
+                     amounts.push(_txidUnits(j.contractData.amount, 6));
+                 }
+                 return { found: true, amounts: amounts,
+                     confirmed: String(j.contractRet || 'SUCCESS').toUpperCase() === 'SUCCESS' };
+             }
+
+             /* EVM (ERC20 / BEP20) عبر مستكشفات Blockscout العامة */
+             async function _txidLookupEvm(txid, hosts) {
+                 for (var h = 0; h < hosts.length; h++) {
+                     var base = hosts[h] + '/api/v2/transactions/' + encodeURIComponent(txid);
+                     var tx = await _txidFetchJson(base);
+                     if (!tx || (!tx.hash && !tx.status && !tx.result)) continue;
+                     var amounts = [];
+                     var tt = await _txidFetchJson(base + '/token-transfers');
+                     var items = (tt && (tt.items || tt.result)) || [];
+                     for (var i = 0; i < items.length; i++) {
+                         var it = items[i] || {};
+                         var tot = it.total || {};
+                         amounts.push(_txidUnits(tot.value != null ? tot.value : it.value,
+                             tot.decimals != null ? tot.decimals : ((it.token && it.token.decimals) || 18)));
+                     }
+                     if (tx.value && Number(tx.value) > 0) amounts.push(_txidUnits(tx.value, 18));
+                     return { found: true, amounts: amounts,
+                         confirmed: String(tx.status || 'ok').toLowerCase() !== 'error' };
+                 }
+                 return null;
+             }
+
+             async function verifyDepositTxidOnChain(txid, amount, network) {
+                 var value = String(txid || '').trim();
+                 var target = parseFloat(amount || 0);
+                 if (!value) return { ok: false, error: 'أدخل رمز المعاملة TXID.' };
+                 if (!(target > 0)) return { ok: false, error: 'مبلغ الإيداع غير صالح.' };
+                 /* التدقيق يتم على الكمية فقط: يُقبل أي رمز معاملة (حتى القديم)
+                    طالما أن كميته تساوي مبلغ الإيداع المطلوب. */
+                 var lookups = [
+                     function(){ return _txidLookupTron(value); },
+                     function(){ return _txidLookupEvm(value, ['https://bnb.blockscout.com', 'https://bsc.blockscout.com']); },
+                     function(){ return _txidLookupEvm(value, ['https://eth.blockscout.com']); }
+                 ];
+                 var reachable = false;
+                 var seen = [];
+                 for (var i = 0; i < lookups.length; i++) {
+                     var info = null;
+                     try { info = await lookups[i](); } catch (e) { info = null; }
+                     if (!info || !info.found) continue;
+                     reachable = true;
+                     if (_txidAmountsMatch(info.amounts, target)) return { ok: true };
+                     seen = seen.concat(info.amounts || []);
+                 }
+                 if (reachable) {
+                     var shown = seen.filter(function(v){ return isFinite(v) && v > 0; })
+                         .map(function(v){ return v.toFixed(2); }).join(' / ');
+                     return { ok: false, error: 'رمز المعاملة صحيح لكن كميته' + (shown ? ' (' + shown + ')' : '') +
+                         ' لا تساوي المبلغ المطلوب إيداعه ($' + target.toFixed(2) + '). أدخل رمز معاملة بنفس الكمية.' };
+                 }
+                 /* تعذر الوصول إلى مستكشفات الشبكة (حجب/انقطاع) → لا يُرفض الرمز،
+                    ويُرسل الطلب للإدارة للتدقيق اليدوي على الكمية. */
+                 return { ok: true, unverified: true };
+             }
+
               function validateDepositTxid(tx, txid) {
                  var value = String(txid || '').trim();
                  if (!tx || tx.status !== 'awaiting_txid') return 'هذا الطلب غير متاح. ابدأ طلب إيداع جديد.';
@@ -7985,7 +8102,7 @@
                      + '<h3 class="txid-flow-title">أدخل رمز المعاملة TXID</h3>'
                       + '<p class="txid-flow-sub">بعد تأكيد الشحن، أدخل TXID الكامل خلال 48 ساعة ليتم إرسال الطلب إلى الإدارة.</p>'
                      + '<div class="txid-amount-row"><span>المبلغ المطلوب تأكيده</span><strong>$' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT</strong></div>'
-                      + '<div class="txid-recent-note"><i class="fas fa-calendar-check"></i><span>رمز المعاملة حديث، وتبقى صلاحية الطلب لمدة تصل إلى 48 ساعة من وقت إنشائه.</span></div>'
+                      + '<div class="txid-recent-note"><i class="fas fa-calendar-check"></i><span>يُقبل أي رمز معاملة (حتى القديم) بشرط أن تكون كميته على الشبكة مساوية للمبلغ المطلوب إيداعه. لا يُرسل الطلب إلى جداول البيانات إلا بعد قبول الرمز.</span></div>'
                      + '<div class="input-group" style="text-align:right;margin-bottom:10px;">'
                      + '<label for="depositTxidInput" style="display:block;margin-bottom:6px;color:var(--text-muted);">رمز المعاملة TXID</label>'
                      + '<input class="input-field txid-input" type="text" id="depositTxidInput" inputmode="text" autocomplete="off" spellcheck="false" maxlength="128" placeholder="ألصق TXID الكامل هنا">'
@@ -7993,19 +8110,45 @@
                      + '<div class="txid-error" id="depositTxidError" role="alert"></div>'
                      + '<button class="wbtn-submit blue" id="submitDepositTxidBtn" style="margin-top:14px;"><i class="fas fa-check-double"></i> إرسال TXID للمراجعة</button>'
                      + '</div>';
-                 document.getElementById('submitDepositTxidBtn')?.addEventListener('click', function() {
+                 document.getElementById('submitDepositTxidBtn')?.addEventListener('click', async function() {
+                     var submitBtn = this;
                      var txidInput = document.getElementById('depositTxidInput');
-                      var error = validateDepositTxid(tx, txidInput?.value);
                      var errorEl = document.getElementById('depositTxidError');
-                     if (error) {
-                         if (errorEl) { errorEl.textContent = error; errorEl.classList.add('show'); }
-                         return;
-                     }
-                      var result = creditDepositFromTxid(tx, txidInput.value);
-                     if (!result.ok) {
-                         if (errorEl) { errorEl.textContent = result.error; errorEl.classList.add('show'); }
-                         return;
-                     }
+                     var showErr = function(msg) {
+                         if (errorEl) { errorEl.textContent = msg; errorEl.classList.add('show'); }
+                     };
+                      var error = validateDepositTxid(tx, txidInput?.value);
+                     if (error) { showErr(error); return; }
+                     if (submitBtn.dataset.busy === '1') return;
+                     submitBtn.dataset.busy = '1';
+                     var originalHtml = submitBtn.innerHTML;
+                     submitBtn.disabled = true;
+                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحقق من رمز المعاملة...';
+                     if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('show'); }
+                     var entered = String(txidInput.value || '').trim();
+                     var check = { ok: false, error: 'تعذر التحقق من رمز المعاملة.' };
+                     try {
+                         check = await verifyDepositTxidOnChain(entered, tx.amount, tx.network || currentDepositNetwork);
+                     } catch (e) {}
+                     submitBtn.dataset.busy = '';
+                     submitBtn.disabled = false;
+                     submitBtn.innerHTML = originalHtml;
+                     if (!check || !check.ok) { showErr((check && check.error) || 'تعذر التحقق من رمز المعاملة.'); return; }
+                      var result = creditDepositFromTxid(tx, entered);
+                     if (!result.ok) { showErr(result.error); return; }
+                     /* قُبل الرمز من المنصة → الآن فقط يُرسل الأمر إلى جداول البيانات */
+                     try {
+                         if (typeof submitDepositApprovalRequest === 'function') {
+                             submitDepositApprovalRequest(result.tx).then(function(r) {
+                                 try {
+                                     if (typeof apiOk === 'function' && apiOk(r))
+                                         showToast('تم إرسال طلب الإيداع إلى جداول البيانات — يُضاف الرصيد بعد الموافقة فقط', true, 'success');
+                                     else
+                                         showToast('تم قبول رمز المعاملة، وسنعيد إرسال الطلب تلقائياً', true, 'info');
+                                 } catch (e2) {}
+                             });
+                         }
+                     } catch (e) {}
                      if (typeof onAccepted === 'function') onAccepted(result.tx);
                      else {
                          container.innerHTML = '<div class="txid-success"><i class="fas fa-check-circle" style="margin-left:5px;"></i> تم إرسال TXID. بانتظار موافقة الإدارة على $' + parseFloat(result.tx.amount || 0).toFixed(2) + ' USDT قبل إضافته إلى رصيدك.</div>';
@@ -10587,8 +10730,11 @@
                 // ===== الأرصدة والأرباح: المصدر الوحيد هو جداول البيانات =====
                 acc.todayProfit     = _sheetNum(u, ['todayProfit', 'dailyProfit', 'profitToday', 'todaysProfit', 'profit']);
                 acc.availableBalance = _sheetNum(u, ['availableBalance', 'available', 'freeBalance']);
+                acc._sheetTodayProfit = acc.todayProfit;
+                acc._sheetAvailable   = acc.availableBalance;
                 acc.frozenBalance   = _sheetNum(u, ['frozenBalance', 'frozen', 'locked', 'lockedBalance']);
                 acc.totalProfit     = _sheetNum(u, ['totalProfit', 'profitTotal', 'allProfit']);
+                acc._sheetTotalProfit = acc.totalProfit;
                 acc.teamProfit      = _sheetNum(u, ['teamProfit', 'referralProfit', 'teamEarnings']);
                 acc.totalDeposits   = _sheetNum(u, ['totalDeposits', 'deposits total', 'depositsTotal']);
                 if (Array.isArray(u.withdrawals)) { acc.sheetWithdrawals = u.withdrawals; }
@@ -10639,6 +10785,7 @@
                 // اعتماد الأرباح الموافق عليها في جداول البيانات -> تُضاف إلى "أرباح اليوم"
                 try { if (__pendingApprovalRows) applyApprovedSyncProfits(__pendingApprovalRows); } catch (e) {}
                 try { applyApprovedDailyProfits(u); } catch (e) {}
+                try { recomputeProfitsFromLedger(getSavedAccount()); } catch (e) {}
                 // إعادة بناء سجل العمليات (إيداع/سحب/اشتراك) من السحابة
                 try { rebuildWalletTransactionsFromSheet(u); } catch (e) {}
                 try { applySheetDepositStatuses(acc.sheetDeposits); } catch (e) {}
@@ -11221,41 +11368,8 @@
                 showToast('أدخل رمز المعاملة TXID لإرسال طلب الإيداع للمراجعة', true, 'info');
             }, true);
 
-            // 2) TXID submitted -> record the real transaction id in the sheet
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('#submitDepositTxidBtn');
-                if (!btn) return;
-                const txidInput = document.getElementById('depositTxidInput');
-                const txid = (txidInput && txidInput.value || '').trim();
-                if (!txid) return;
-                let amount = 0;
-                try {
-                    const tx = getActiveDepositRequest();
-                    amount = parseFloat((tx && tx.amount) || 0) || 0;
-                } catch (err) {}
-                if (!amount) { const a = getSavedAccount() || {}; amount = parseFloat(a.lastDepositAmount || 0) || 0; }
-                if (!amount) return;
-                let net = 'trc20';
-                try { net = currentDepositNetwork || 'trc20'; } catch (err) {}
-                // منع الإرسال المكرر لنفس الـ TXID
-                window.__sentDepositTxids = window.__sentDepositTxids || {};
-                if (window.__sentDepositTxids[txid]) return;
-                window.__sentDepositTxids[txid] = true;
-                var _depTx = null;
-                try {
-                    _depTx = getWalletTransactions().filter(function (x) {
-                        return x.type === 'deposit' && String(x.txid || '').trim() === txid;
-                    }).pop() || null;
-                } catch (err) {}
-                if (!_depTx) _depTx = { id: null, txid: txid, amount: amount, network: net };
-                submitDepositApprovalRequest(_depTx).then(function(r) {
-                    if (apiOk(r)) showToast('تم إرسال طلب الإيداع إلى جداول البيانات — سيُضاف الرصيد بعد موافقة الإدارة فقط', true, 'success');
-                    else {
-                        delete window.__sentDepositTxids[txid];
-                        showToast(apiMsg(r, 'تعذر إرسال طلب الإيداع الآن — سنعيد المحاولة تلقائياً'), true, 'error');
-                    }
-                });
-            }, true);
+            // 2) الإرسال إلى جداول البيانات يتم فقط داخل تدفق التحقق من TXID
+            //    (بعد قبول المنصة للرمز والتأكد من مطابقة الكمية على الشبكة).
 
             /* ===== إرسال طلب الإيداع إلى جداول البيانات مع إعادة المحاولة =====
                الرصيد لا يُضاف محلياً إطلاقاً؛ يُضاف فقط عند الموافقة في الجدول. */
@@ -11578,10 +11692,52 @@
             }
             window.isSyncProfitRow = isSyncProfitRow;
 
+            // ===== سجل الأرباح المعتمدة (بعد الموافقة في جداول البيانات فقط) =====
+            const PROFIT_LEDGER_KEY = 'pocket24_profit_ledger';
+            function _readProfitLedger() {
+                try { return JSON.parse(localStorage.getItem(PROFIT_LEDGER_KEY) || '[]'); } catch (e) { return []; }
+            }
+            function _writeProfitLedger(list) {
+                try { localStorage.setItem(PROFIT_LEDGER_KEY, JSON.stringify(list.slice(0, 1000))); } catch (e) {}
+            }
+            function _isTodayTs(ts) {
+                var d = new Date(Number(ts) || Date.now()), n = new Date();
+                return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+            }
+            // تعتمد "أرباح اليوم" و"إجمالي الأرباح" على السجل + قيم جداول البيانات (الأعلى يفوز)
+            function recomputeProfitsFromLedger(acc) {
+                acc = acc || getSavedAccount();
+                if (!acc) return null;
+                var ledger = _readProfitLedger();
+                var todaySum = 0, allSum = 0;
+                ledger.forEach(function (e) {
+                    var a = parseFloat(e && e.amount) || 0;
+                    if (!a) return;
+                    allSum += a;
+                    if (_isTodayTs(e.ts)) todaySum += a;
+                });
+                todaySum = +todaySum.toFixed(2);
+                allSum = +allSum.toFixed(2);
+                acc.todayProfit      = +Math.max(parseFloat(acc._sheetTodayProfit) || 0, todaySum).toFixed(2);
+                acc.totalProfit      = +Math.max(parseFloat(acc._sheetTotalProfit) || 0, allSum).toFixed(2);
+                acc.availableBalance = +Math.max(parseFloat(acc._sheetAvailable) || 0, acc.todayProfit).toFixed(2);
+                saveAccount(acc);
+                try { updateBalanceDisplay(); } catch (e) {}
+                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent(); } catch (e) {}
+                return acc;
+            }
+            window.recomputeProfitsFromLedger = recomputeProfitsFromLedger;
+
             // إضافة ربح معتمد إلى "أرباح اليوم" + الرصيد المتاح + إجمالي الأرباح
-            function creditTodayProfit(acc, amount) {
-                /* معطّل: لا تُضاف أي أرباح محلياً. المصدر الوحيد هو جداول البيانات. */
-                return;
+            function creditTodayProfit(acc, amount, key, ts) {
+                amount = parseFloat(amount) || 0;
+                if (!amount) return;
+                var k = String(key || ('p:' + Date.now() + ':' + amount));
+                var list = _readProfitLedger();
+                if (list.some(function (e) { return e && e.key === k; })) return;
+                list.unshift({ key: k, amount: +amount.toFixed(2), ts: Number(ts) || Date.now() });
+                _writeProfitLedger(list);
+                recomputeProfitsFromLedger(acc || getSavedAccount());
             }
             window.creditTodayProfit = creditTodayProfit;
 
@@ -11624,7 +11780,7 @@
                     var amount = parseFloat(row.amount || row.dailyProfit || row.profit || 0) || 0;
                     if (!amount) return;
                     credited.unshift(key);
-                    creditTodayProfit(acc, amount);
+                    creditTodayProfit(acc, amount, 'daily:' + key, _sheetTs(row));
                     changed = true;
                 });
                 if (!changed) return;
@@ -11650,7 +11806,7 @@
                     if (!p) return;
                     p.credited = true;
                     changed = true;
-                    creditTodayProfit(acc, parseFloat(p.profit) || 0);
+                    creditTodayProfit(acc, parseFloat(p.profit) || 0, 'sync:' + txid, p.ts || _sheetTs(row));
                 });
                 if (!changed) return;
                 _writePendingSyncProfits(pending);
