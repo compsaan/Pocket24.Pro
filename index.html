@@ -5840,16 +5840,6 @@
                     <div id="syncProfitBadge" class="ct-profit-badge-glossy"></div>
                 </div>
 
-                <!-- Code Entry — standalone section (always available, no cooldown) -->
-                <div class="ct-input-section">
-                    <div class="ct-code-box">
-                        <div class="ct-code-box-label"><i class="fas fa-key"></i> كود التحقق من الصفقة</div>
-                        <div class="ct-input-row">
-                            <input type="text" class="input-field ct-code-input" id="tradePageCodeInput" placeholder="أدخل كود الطلب هنا...">
-                        </div>
-                        <button class="ct-confirm-btn" id="verifyTradePageCodeBtn"><i class="fas fa-check-double"></i> تأكيد الصفقة</button>
-                    </div>
-                </div>
 
                 <!-- Section label -->
                 <div class="ct-section-title" style="margin:10px 12px 8px;">
@@ -5995,53 +5985,6 @@
             <div class="market-page-content" id="fullMarketCoinList"></div>
         </div>
 
-        <!-- VIP Page -->
-        <div id="vipPage" class="vip-page">
-            <div class="vip-header">
-                <div class="header-left">
-                    <button class="back-btn" id="backFromVipBtn"><i class="fas fa-arrow-right"></i></button>
-                    <span class="page-title"><i class="fas fa-crown" style="color:#fbbf24;margin-left:6px;"></i> <span data-i18n="vipTitle">عروض VIP الحصرية</span></span>
-                </div>
-            </div>
-            <div class="vip-page-content">
-                <div class="vip-header-banner">
-                    <div class="vip-banner-shine"></div>
-                    <div class="vip-header-icon"><i class="fas fa-crown"></i></div>
-                    <div class="vip-header-title">عروض VIP الحصرية</div>
-                    <div class="vip-header-subtitle">استثمر بذكاء واحصل على عوائد يومية مضمونة لمدة 30 يومًا</div>
-                    <div class="vip-banner-stats">
-                        <div class="vip-banner-stat">
-                            <div class="vip-banner-stat-val">20%</div>
-                            <div class="vip-banner-stat-lbl">ربح يومي</div>
-                        </div>
-                        <div class="vip-banner-divider"></div>
-                        <div class="vip-banner-stat">
-                            <div class="vip-banner-stat-val">30</div>
-                            <div class="vip-banner-stat-lbl">يومًا</div>
-                        </div>
-                        <div class="vip-banner-divider"></div>
-                        <div class="vip-banner-stat">
-                            <div class="vip-banner-stat-val">10</div>
-                            <div class="vip-banner-stat-lbl">خطط</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="vip-level-filter">
-                    <div class="vip-filter-chip active" data-filter="all">الكل</div>
-                    <div class="vip-filter-chip" data-filter="bronze">برونزي</div>
-                    <div class="vip-filter-chip" data-filter="silver">فضي</div>
-                    <div class="vip-filter-chip" data-filter="gold">ذهبي</div>
-                    <div class="vip-filter-chip" data-filter="plat">بلاتيني</div>
-                    <div class="vip-filter-chip" data-filter="diamond">ماسي</div>
-                </div>
-                <div class="vip-grid" id="vipOffersContainer"></div>
-                <div class="vip-footer-note">
-                    <i class="fas fa-shield-alt"></i> جميع الاشتراكات صالحة لمدة <strong>30 يومًا</strong> فقط.<br>
-                    <i class="fas fa-coins"></i> لا يوجد حد أدنى للإيداع · أرباح يومية مضمونة <strong>20%</strong> يوميًا.<br>
-                    <i class="fas fa-lock"></i> رأس المال محمي بالكامل &nbsp;·&nbsp; <i class="fas fa-headset"></i> دعم 24/7
-                </div>
-            </div>
-        </div>
         <!-- Admin Page -->
         <div id="adminPage" class="admin-page">
             <div class="admin-header">
@@ -6182,7 +6125,7 @@
         <div id="bottomNav">
             <div class="nav-item active" data-nav="home"><i class="fas fa-home"></i><span data-i18n="home">الرئيسية</span></div>
             <div class="nav-item" data-nav="market"><i class="fas fa-chart-pie"></i><span data-i18n="market">السوق</span></div>
-            <div class="nav-item" data-nav="vip"><i class="fas fa-crown"></i><span>VIP</span></div>
+            <div class="nav-item" data-nav="trade"><i class="fas fa-chart-line"></i><span data-i18n="startTrade">ابدأ التداول</span></div>
             <div class="nav-item" data-nav="wallet"><i class="fas fa-wallet"></i><span data-i18n="wallet">المحفظة</span></div>
             <div class="nav-item" data-nav="assets"><i class="fas fa-coins"></i><span data-i18n="assets">أصول</span></div>
         </div>
@@ -6313,11 +6256,11 @@
                         <button class="close-modal" data-close="loginModal">&times;</button>
                     </div>
                     <h2 data-i18n="welcomeBack">مرحباً بعودتك</h2>
-                    <p>سجّل الدخول للوصول إلى محفظتك، متابعة أرباحك اليومية وإدارة خطط VIP الخاصة بك.</p>
+                    <p>سجّل الدخول للوصول إلى محفظتك وابدأ التداول والتزامن مع الخبراء مباشرة.</p>
                     <div class="auth-badges">
                         <span class="auth-badge"><i class="fas fa-shield-halved"></i> حماية مشفّرة</span>
                         <span class="auth-badge"><i class="fas fa-bolt"></i> دخول فوري</span>
-                        <span class="auth-badge"><i class="fas fa-crown"></i> مزايا VIP</span>
+                        <span class="auth-badge"><i class="fas fa-chart-line"></i> تزامن الخبراء</span>
                     </div>
                 </div>
                 <div class="auth-body">
@@ -7091,7 +7034,7 @@
                     logout: 'تسجيل الخروج',
                     totalAssets: 'إجمالي الأصول',
                     totalAssetsUsdt: 'إجمالي الأصول (USDT)',
-                    vipTitle: 'عروض VIP الحصرية',
+                    vipTitle: 'ابدأ التداول',
                 },
                 en: {
                     appName: 'Pocket24',
@@ -7228,7 +7171,7 @@
                     logout: 'Log out',
                     totalAssets: 'Total Assets',
                     totalAssetsUsdt: 'Total Assets (USDT)',
-                    vipTitle: 'Exclusive VIP Offers',
+                    vipTitle: 'Start Trading',
                 },
                 fr: {
                     appName: 'Pocket24',
@@ -7365,7 +7308,7 @@
                     logout: 'Déconnexion',
                     totalAssets: 'Total actifs',
                     totalAssetsUsdt: 'Total actifs (USDT)',
-                    vipTitle: 'Offres VIP exclusives',
+                    vipTitle: 'Commencer le trading',
                 }
             };
 
@@ -7470,7 +7413,7 @@
 
             document.addEventListener('click', function(e) {
                 const btn = e.target.closest(
-                    'button, .quick-item, .qi, .start-trade-card, .trade-banner, .market-row, .admin-menu-item, .nav-item, .vip-subscribe-btn'
+                    'button, .quick-item, .qi, .start-trade-card, .trade-banner, .market-row, .admin-menu-item, .nav-item'
                     );
                 if (btn && !e.target.closest('.close-modal') && !e.target.closest('.toggle-switch')) {
                     addRipple(e, btn);
@@ -7540,7 +7483,6 @@
                 marketPage = document.getElementById('marketPage'),
                 adminPage = document.getElementById('adminPage'),
                 assetsPage = document.getElementById('assetsPage'),
-                vipPage = document.getElementById('vipPage'),
                 bottomNav = document.getElementById('bottomNav');
 
             function showBottomNav() { if (bottomNav) bottomNav.classList.add('visible'); }
@@ -7548,7 +7490,7 @@
             function hideBottomNav() { if (bottomNav) bottomNav.classList.remove('visible'); }
 
             function hideAllPages() {
-                [welcomeScreen, mainApp, tradePage, walletPage, marketPage, adminPage, assetsPage, vipPage].forEach(p => {
+                [welcomeScreen, mainApp, tradePage, walletPage, marketPage, adminPage, assetsPage].forEach(p => {
                     if (p) { p.style.display = 'none';
                         p.classList.remove('active', 'page-slide-out'); }
                 });
@@ -7577,7 +7519,7 @@
                 showBottomNav();
                 if (navName) setActiveNav(navName);
                 updateOnlineStatus();
-                const scrollArea = pageEl?.querySelector('.page-scroll-area, .wallet-page-content, .market-page-content, .admin-page-content, .vip-page-content');
+                const scrollArea = pageEl?.querySelector('.page-scroll-area, .wallet-page-content, .market-page-content, .admin-page-content');
                 if (scrollArea) scrollArea.scrollTop = 0;
             }
 
@@ -9395,206 +9337,6 @@
                 openModal(document.getElementById('termsModal'));
             }
 
-            // ==================== VIP OFFERS ====================
-            const vipOffers = [
-                
-                { deposit: 75,  dailyProfit: 15.00,  monthlyProfit: 450,  hot: true,  gold: false, tier: 'bronze',  tierLabel: 'برونزي'  },
-                { deposit: 100, dailyProfit: 20.00,  monthlyProfit: 600,  hot: false, gold: false, tier: 'silver',  tierLabel: 'فضي'     },
-                { deposit: 150, dailyProfit: 30.00,  monthlyProfit: 900,  hot: false, gold: false, tier: 'silver',  tierLabel: 'فضي'     },
-                { deposit: 200, dailyProfit: 40.00,  monthlyProfit: 1200, hot: false, gold: true,  tier: 'gold',    tierLabel: 'ذهبي'    },
-                { deposit: 250, dailyProfit: 50.00,  monthlyProfit: 1500, hot: false, gold: false, tier: 'gold',    tierLabel: 'ذهبي'    },
-                { deposit: 300, dailyProfit: 60.00,  monthlyProfit: 1800, hot: false, gold: false, tier: 'plat',    tierLabel: 'بلاتيني' },
-                { deposit: 350, dailyProfit: 70.00,  monthlyProfit: 2100, hot: false, gold: false, tier: 'plat',    tierLabel: 'بلاتيني' },
-                { deposit: 400, dailyProfit: 80.00,  monthlyProfit: 2400, hot: false, gold: false, tier: 'diamond', tierLabel: 'ماسي'    },
-                { deposit: 500, dailyProfit: 100.00, monthlyProfit: 3000, hot: false, gold: true,  tier: 'diamond', tierLabel: 'ماسي'    }
-            ];
-            let vipActiveFilter = 'all';
-
-             // Returns the real spendable balance of an account. Balances added
-             // anywhere in the app (deposits, profits, manual credits) count here,
-             // so VIP offers activate against actual funds.
-             function getSpendableBalance(account) {
-                 if (!account) return 0;
-                 const candidates = [account.balance, account.availableBalance,
-                     account.walletBalance, account.totalBalance, account.usdtBalance];
-                 let best = 0;
-                 candidates.forEach(function(value) {
-                     const parsed = parseFloat(String(value === undefined || value === null ? 0 : value)
-                         .replace(/[^0-9.\-]/g, ''));
-                     if (!isNaN(parsed) && parsed > best) best = parsed;
-                 });
-                 return +best.toFixed(2);
-             }
-
-             function getActiveVipSubscription(account, offerId) {
-                 if (!account || !Array.isArray(account.vipSubscriptions)) return null;
-                 return account.vipSubscriptions.find(function(subscription) {
-                     return subscription.offerId === offerId &&
-                         subscription.status === 'active' &&
-                         Number(subscription.expiresAt || 0) > Date.now();
-                 }) || null;
-             }
-
-             function getVipSubscriptionRecord(account, offerId) {
-                 if (!account || !Array.isArray(account.vipSubscriptions)) return null;
-                 return account.vipSubscriptions.find(function(subscription) {
-                     return subscription.offerId === offerId &&
-                         ['rejected', 'cancelled', 'expired'].indexOf(String(subscription.status || '')) === -1 &&
-                         Number(subscription.expiresAt || 0) > Date.now();
-                 }) || null;
-             }
-
-             /* تفعيل الاشتراك = إرسال طلب موافقة إلى جداول البيانات.
-                لا يتم خصم أي رصيد محلياً، والخصم يتم فقط بعد الموافقة
-                من جداول البيانات (يظهر تلقائياً عند مزامنة الرصيد). */
-             function activateVipOffer(offer, offerId) {
-                 const account = getSavedAccount();
-                 if (!account) {
-                     showToast('يرجى تسجيل الدخول أولاً', true);
-                     return;
-                 }
-                 const currentBalance = getSpendableBalance(account);
-                 if (getVipSubscriptionRecord(account, offerId)) {
-                     showToast('يوجد طلب أو اشتراك قائم لهذا العرض.', true);
-                     return;
-                 }
-                 if (currentBalance < offer.deposit) {
-                     showToast('الرصيد غير كافٍ. تحتاج إلى $' + offer.deposit.toFixed(2) +
-                         ' ورصيدك الحالي $' + currentBalance.toFixed(2), true);
-                     return;
-                 }
-
-                 const startedAt = Date.now();
-                 const expiresAt = startedAt + (30 * 24 * 60 * 60 * 1000);
-                 const subscription = {
-                     id: offerId + '-' + startedAt,
-                     offerId: offerId,
-                     deposit: offer.deposit,
-                     dailyProfit: offer.dailyProfit,
-                     monthlyProfit: offer.monthlyProfit,
-                     tier: offer.tier,
-                     status: 'pending',
-                     startedAt: startedAt,
-                     expiresAt: expiresAt,
-                     profitDaysSent: []
-                 };
-                 if (!Array.isArray(account.vipSubscriptions)) account.vipSubscriptions = [];
-                 account.vipSubscriptions.push(subscription);
-                 saveAccount(account);
-
-                 addWalletTransaction({
-                     type: 'vip',
-                     amount: offer.deposit,
-                     network: 'داخلي',
-                     currency: 'USDT',
-                     symbol: '$',
-                     status: 'review',
-                     offerId: offerId,
-                     note: 'طلب تفعيل خطة VIP ' + (vipOffers.indexOf(offer) + 1) + ' — بانتظار موافقة الإدارة',
-                     submittedAt: startedAt
-                 });
-                 addUserNotification({
-                     type: 'vip-requested',
-                     title: 'تم إرسال طلب تفعيل VIP',
-                     body: 'طلب تفعيل خطة VIP ' + (vipOffers.indexOf(offer) + 1) +
-                         ' بقيمة $' + offer.deposit.toFixed(2) + ' بانتظار موافقة الإدارة. لن يُخصم الرصيد قبل الموافقة.',
-                     amount: offer.deposit.toFixed(2),
-                     icon: 'fas fa-hourglass-half',
-                     color: 'linear-gradient(135deg,#f59e0b,#d97706)'
-                 });
-
-                 // إرسال طلب الاشتراك إلى جداول البيانات
-                 try {
-                     sendSubscriptionToSheet(subscription, offer).then(function(r) {
-                         if (apiOk(r)) {
-                             showToast('تم تسجيل طلب الاشتراك في جداول البيانات (بانتظار الموافقة)', true, 'success');
-                         } else if (r && r.netError) {
-                             showToast('تعذر الاتصال بالخادم، سيُعاد إرسال طلب الاشتراك تلقائياً', true, 'error');
-                         } else {
-                             showToast(apiMsg(r, 'تعذر تسجيل طلب الاشتراك، سيُعاد المحاولة تلقائياً'), true, 'error');
-                         }
-                     });
-                 } catch (e) { queueSubscriptionRetry(subscription); }
-                 // إرسال أول طلب ربح يومي مباشرة، ثم يوماً بيوم لمدة شهر
-                 try { setTimeout(function(){ processDailyProfitRequests(); }, 1500); } catch (e) {}
-
-                 populateVipOffers();
-                 if (typeof renderWalletTabContent === 'function' &&
-                     document.getElementById('walletPage')?.classList.contains('active')) {
-                     renderWalletTabContent();
-                 }
-                 showToast('تم إرسال طلب تفعيل الاشتراك إلى الإدارة. سيتم الخصم والتفعيل بعد الموافقة.', true, 'success');
-             }
-
-             function populateVipOffers() {
-                const container = document.getElementById('vipOffersContainer');
-                if (!container) return;
-                container.innerHTML = '';
-                 const account = getSavedAccount();
-                const filtered = vipActiveFilter === 'all' ? vipOffers : vipOffers.filter(o => o.tier === vipActiveFilter);
-                filtered.forEach((offer) => {
-                    const globalIdx = vipOffers.indexOf(offer);
-                     const offerId = 'vip-' + (globalIdx + 1);
-                     const activeSubscription = getActiveVipSubscription(account, offerId);
-                     const pendingSubscription = !activeSubscription &&
-                         (function(){ const r = getVipSubscriptionRecord(account, offerId);
-                             return (r && r.status === 'pending') ? r : null; })();
-                    const card = document.createElement('div');
-                    card.className = 'vip-offer-card' + (offer.hot ? ' hot-offer' : '') + (offer.gold ? ' gold-offer' : '');
-                    const pct = ((offer.dailyProfit / offer.deposit) * 100).toFixed(0);
-                    const totalROI = (parseFloat(pct) * 30).toFixed(0);
-                    const roiBarWidth = Math.min(98, Math.max(18, parseFloat(pct) * 5));
-                    let badge = '';
-                    if (offer.hot) badge = '<div class="hot-badge"><i class="fas fa-fire"></i> الأكثر طلباً</div>';
-                    else if (offer.gold) badge = '<div class="gold-badge"><i class="fas fa-gem"></i> مميز</div>';
-                    card.innerHTML = badge +
-                        '<div class="vip-card-strip"></div>' +
-                        '<div class="vip-card-body">' +
-                            '<div class="vip-offer-header">' +
-                                '<div class="vip-offer-rank">' + (globalIdx+1) + '</div>' +
-                                '<div class="vip-offer-meta">' +
-                                    '<div class="vip-offer-name">خطة VIP ' + (globalIdx+1) + '</div>' +
-                                    '<div class="vip-offer-duration"><i class="fas fa-calendar-check"></i> 30 يومًا · يومي</div>' +
-                                '</div>' +
-                                '<span class="vip-tier-badge tier-' + offer.tier + '">' + offer.tierLabel + '</span>' +
-                            '</div>' +
-                            '<div class="vip-offer-stats">' +
-                                '<div class="vip-stat-box vip-stat-deposit"><div class="vip-stat-label"><i class="fas fa-wallet" style="color:#3b82f6;font-size:9px;"></i> الإيداع</div><div class="vip-stat-value">$' + offer.deposit.toLocaleString() + '</div></div>' +
-                                '<div class="vip-stat-box vip-stat-daily"><div class="vip-stat-label"><i class="fas fa-chart-line" style="color:#22c55e;font-size:9px;"></i> يومي (' + pct + '%)</div><div class="vip-stat-value daily-profit">$' + offer.dailyProfit.toFixed(2) + '</div></div>' +
-                                '<div class="vip-stat-box vip-stat-monthly"><div class="vip-stat-label"><i class="fas fa-coins" style="color:#f59e0b;font-size:9px;"></i> شهري</div><div class="vip-stat-value monthly-profit">$' + offer.monthlyProfit.toLocaleString() + '</div></div>' +
-                            '</div>' +
-                            '<div class="vip-roi-bar-wrap">' +
-                                '<div class="vip-roi-bar-header"><span class="vip-roi-bar-label">العائد الإجمالي (30 يوم)</span><span class="vip-roi-bar-pct">+' + totalROI + '%</span></div>' +
-                                '<div class="vip-roi-track"><div class="vip-roi-fill" style="width:' + roiBarWidth + '%"></div></div>' +
-                            '</div>' +
-                             (activeSubscription
-                                 ? '<button class="vip-subscribe-btn" disabled><i class="fas fa-check-circle"></i> مفعّل حتى ' + new Date(activeSubscription.expiresAt).toLocaleDateString('ar') + '</button>'
-                                 : pendingSubscription
-                                 ? '<button class="vip-subscribe-btn" disabled><i class="fas fa-hourglass-half"></i> بانتظار موافقة الإدارة</button>'
-                                 : '<button class="vip-subscribe-btn"><i class="fas fa-crown"></i> اشترك الآن</button>') +
-                        '</div>';
-                     const subscribeButton = card.querySelector('.vip-subscribe-btn');
-                     if (subscribeButton && !activeSubscription && !pendingSubscription) {
-                         subscribeButton.addEventListener('click', () => activateVipOffer(offer, offerId));
-                     }
-                    container.appendChild(card);
-                });
-            }
-            document.addEventListener('click', function(e) {
-                const chip = e.target.closest('.vip-filter-chip');
-                if (!chip) return;
-                document.querySelectorAll('.vip-filter-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                vipActiveFilter = chip.dataset.filter;
-                populateVipOffers();
-            });
-            function openVipPage() {
-
-                if (!isLoggedIn()) { openModal(document.getElementById('loginModal')); return; }
-                navigateTo(vipPage, 'vip');
-                populateVipOffers();
-            }
-
             // ==================== AUTH UX (password toggle / strength) ====================
             document.addEventListener('click', function(e) {
                 const toggle = e.target.closest('[data-toggle-pass]');
@@ -9758,7 +9500,7 @@
                     else if (nav === 'market') openMarketPage();
                     else if (nav === 'assets') openAssetsPage();
                     else if (nav === 'wallet') openWalletPage();
-                    else if (nav === 'vip') openVipPage();
+                    else if (nav === 'trade') openTradePage();
                 });
             }));
 
@@ -9835,7 +9577,7 @@
                 }
             });
 
-            ['backFromTradeBtn', 'backFromWalletBtn', 'backFromMarketBtn', 'backFromAdminBtn', 'backFromVipBtn', 'backFromAssetsBtn'].forEach(
+            ['backFromTradeBtn', 'backFromWalletBtn', 'backFromMarketBtn', 'backFromAdminBtn', 'backFromAssetsBtn'].forEach(
                 id => document.getElementById(id)?.addEventListener('click', showMainApp));
 
             document.querySelectorAll('.tf-btn').forEach(btn => btn.addEventListener('click', function() {
@@ -10184,51 +9926,6 @@
                 });
             }
 
-            // Confirm button (requires exactly 8 alphanumeric chars)
-            document.getElementById('verifyTradePageCodeBtn')?.addEventListener('click', function() {
-                const code = document.getElementById('tradePageCodeInput').value.trim();
-                const input = document.getElementById('tradePageCodeInput');
-                const btn = document.getElementById('verifyTradePageCodeBtn');
-                if (!code) { showToast('يرجى إدخال رمز التداول', true); return; }
-                // Validate: exactly 8 alphanumeric characters (letters + digits)
-                if (!/^[A-Za-z0-9]{8}$/.test(code)) {
-                    showToast('الرمز يجب أن يتكون من 8 أحرف وأرقام بالضبط', true);
-                    input.style.borderColor = '#ef4444';
-                    setTimeout(() => { input.style.borderColor = ''; }, 2000);
-                    return;
-                 }
-                 // Only pre-attached custom codes are accepted
-                 if (!isAllowedTradeCode(code)) {
-                     showToast('كود غير صالح', true, 'error');
-                     input.style.borderColor = '#ef4444';
-                     setTimeout(() => { input.style.borderColor = ''; }, 2000);
-                     return;
-                 }
-                 // Check balance and prevent reuse of the same transaction code.
-                const _codeAcc = getSavedAccount();
-                if (!_codeAcc) { showToast('يرجى تسجيل الدخول أولاً', true); return; }
-                if ((_codeAcc.balance || 0) <= 0) {
-                    showToast('يرجى الإيداع أولاً لتفعيل الكود', true);
-                    return;
-                }
-                 if (hasUsedTransactionCode(code)) {
-                     showToast('رمز المعاملة مستخدم مسبقاً لهذا المستخدم ولا يمكن استعماله مرة أخرى.', true);
-                     input.style.borderColor = '#ef4444';
-                     setTimeout(() => { input.style.borderColor = ''; }, 2000);
-                     return;
-                 }
-                // Flash button green, clear the code field
-                btn.classList.add('active-state');
-                btn.innerHTML = '<i class="fas fa-check-double"></i> تم التحقق ✓';
-                input.style.borderColor = '#22c55e';
-                // Clear input after brief delay so user sees it
-                setTimeout(() => { input.value = ''; input.style.borderColor = ''; }, 1200);
-                setTimeout(() => {
-                    btn.classList.remove('active-state');
-                    btn.innerHTML = '<i class="fas fa-check-double"></i> تأكيد الصفقة';
-                }, 4500);
-                 doSync(-1, code);
-            });
 
             // quickSyncBtn removed — sync via expert cards only
 
