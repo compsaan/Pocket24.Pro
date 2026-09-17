@@ -8548,7 +8548,9 @@
                     var _amt = parseFloat(amount);
                     var _avail = getWithdrawableProfit();
                     if (_amt > _avail + 0.01) { showToast('المبلغ يتجاوز الأرباح المتاحة للسحب ($' + _avail.toFixed(2) + ')', true); return; }
-                    try { addWalletTransaction({type:'withdraw',amount:_amt,network:currentNetwork,currency:'USDT',symbol:'$',status:'pending',address:address}); } catch(e){}
+                    var _wtx1 = null;
+                    try { _wtx1 = addWalletTransaction({type:'withdraw',amount:_amt,network:currentNetwork,currency:'USDT',symbol:'$',status:'pending',address:address,txid:'WD-'+Date.now()}); } catch(e){}
+                    try { if (typeof submitWithdrawalRequest === 'function') submitWithdrawalRequest(_wtx1 || {amount:_amt,network:currentNetwork,address:address}); } catch(e){}
                     /* لا يُخصم أي رصيد محلياً — الرصيد يتحدّث من جداول البيانات بعد الاعتماد */
                     try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletTabContent')) renderWalletTabContent(); } catch(e){}
                     showToast(t('withdrawSuccess'), true);
@@ -9200,7 +9202,8 @@
                             }
                             var _wtx = addWalletTransaction({type:'withdraw',amount:_amt2,
                                 network:currentWdNetwork,currency:'USDT',symbol:'$',
-                                status:'pending',address:address});
+                                status:'pending',address:address,txid:'WD-'+Date.now()});
+                            try { if (typeof submitWithdrawalRequest === 'function') submitWithdrawalRequest(_wtx || {amount:_amt2,network:currentWdNetwork,address:address}); } catch(e){}
                             /* لا يُخصم أي رصيد محلياً — الرصيد يتحدّث من جداول البيانات بعد الاعتماد */
                             showToast('تم تسجيل طلب السحب كـ "سحب معلق" — بانتظار المراجعة', true, 'success');
                             try { renderWalletTabContent(); } catch(e){}
@@ -11323,36 +11326,105 @@
             });
 
             // -------------------- WITHDRAWAL (recorded in the sheet) --------------------
-            async function sendWithdrawalToSheet(amount, network, address) {
+            const WD_REQ_RETRY_KEY = 'pocket24_pending_withdraw_requests';
+            function _readWdRetryQueue() {
+                try { return JSON.parse(localStorage.getItem(WD_REQ_RETRY_KEY) || '[]'); } catch (e) { return []; }
+            }
+            function _writeWdRetryQueue(list) {
+                try { localStorage.setItem(WD_REQ_RETRY_KEY, JSON.stringify(list.slice(0, 30))); } catch (e) {}
+            }
+            function queueWithdrawRetry(item) {
+                if (!item || !item.txid) return;
+                const list = _readWdRetryQueue().filter(function (x) { return x && x.txid !== item.txid; });
+                list.unshift(item);
+                _writeWdRetryQueue(list);
+            }
+            function removeWithdrawRetry(txid) {
+                _writeWdRetryQueue(_readWdRetryQueue().filter(function (x) { return x && x.txid !== txid; }));
+            }
+
+            // إرسال طلب السحب إلى جداول البيانات (بانتظار الموافقة)
+            async function sendWithdrawalToSheet(amount, network, address, txid) {
                 const cred = apiGetUser();
                 const acc = getSavedAccount() || {};
                 const username = (cred && cred.username) || acc.username;
-                if (!username || !amount || amount <= 0) return { ok: false, message: 'بيانات غير مكتملة' };
-                const r = await apiPost({
-                    action: 'createWithdrawal',
+                const amt = parseFloat(amount) || 0;
+                if (!username || !amt || amt <= 0) return { ok: false, message: 'بيانات غير مكتملة' };
+                const payload = {
                     username: username,
-                    amount: amount,
+                    user: username,
+                    amount: amt,
+                    withdrawAmount: amt,
                     network: network || 'trc20',
                     address: address || '',
-                    txid: 'WD-' + Date.now()
-                });
-                if (apiOk(r)) { try { await syncFromSheet(); } catch (e) {} }
-                return r;
+                    wallet: address || '',
+                    walletAddress: address || '',
+                    currency: 'USDT',
+                    method: 'crypto',
+                    type: 'withdraw',
+                    requestType: 'withdraw_request',
+                    status: 'pending',
+                    note: 'طلب سحب — بانتظار الموافقة',
+                    date: new Date().toISOString(),
+                    txid: txid || ('WD-' + Date.now())
+                };
+                const actions = ['createWithdrawal', 'createWithdraw', 'addWithdrawal',
+                    'withdraw', 'newWithdrawal', 'createWithdrawRequest', 'createRequest'];
+                let last = null;
+                for (let i = 0; i < actions.length; i++) {
+                    const r = await apiPost(Object.assign({ action: actions[i] }, payload));
+                    last = r;
+                    if (apiOk(r)) {
+                        try { await syncFromSheet(); } catch (e) {}
+                        return r;
+                    }
+                    if (r && r.netError) return r;
+                }
+                return last || { ok: false, message: 'تعذر تسجيل طلب السحب' };
             }
 
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('#submitWithdrawActionBtn');
-                if (!btn) return;
-                const amount = parseFloat((document.getElementById('withdrawAmountInput') || {}).value || '0');
-                const address = ((document.getElementById('withdrawAddressInput') || {}).value || '').trim();
-                if (!amount || amount <= 0 || !address) return;
-                let net = 'trc20';
-                try { net = (typeof currentWdNetwork !== 'undefined' && currentWdNetwork) || 'trc20'; } catch (err) {}
-                sendWithdrawalToSheet(amount, net, address).then(function(r) {
-                    if (apiOk(r)) showToast('تم إرسال طلب السحب وتسجيله (قيد المعالجة)', true, 'success');
-                    else if (r && !r.netError) showToast(apiMsg(r, 'تعذر تسجيل طلب السحب'), true, 'error');
-                });
-            }, true);
+            // إرسال الطلب مع إعادة المحاولة عند فشل الشبكة
+            async function submitWithdrawalRequest(tx) {
+                if (!tx) return { ok: false, message: 'بيانات غير مكتملة' };
+                const txid = tx.txid || ('WD-' + (tx.id || Date.now()));
+                const amount = parseFloat(tx.amount || 0) || 0;
+                const net = tx.network || 'trc20';
+                const addr = tx.address || '';
+                const r = await sendWithdrawalToSheet(amount, net, addr, txid);
+                if (apiOk(r)) {
+                    try { updateWalletTransaction(tx.id, { sheetSent: true, sheetSentAt: Date.now(), txid: txid }); } catch (e) {}
+                    removeWithdrawRetry(txid);
+                    showToast('تم إرسال طلب السحب إلى جداول البيانات — بانتظار الموافقة', true, 'success');
+                } else {
+                    queueWithdrawRetry({ id: tx.id, txid: txid, amount: amount, network: net, address: addr });
+                    showToast(apiMsg(r, 'تعذر إرسال طلب السحب — سيُعاد الإرسال تلقائياً'), true, 'error');
+                }
+                return r;
+            }
+            window.submitWithdrawalRequest = submitWithdrawalRequest;
+            window.sendWithdrawalToSheet = sendWithdrawalToSheet;
+
+            var __wdRetryBusy = false;
+            async function retryPendingWithdrawRequests() {
+                if (__wdRetryBusy) return;
+                const list = _readWdRetryQueue();
+                if (!list.length) return;
+                __wdRetryBusy = true;
+                try {
+                    for (let i = 0; i < list.length; i++) {
+                        const item = list[i];
+                        const r = await sendWithdrawalToSheet(item.amount, item.network, item.address, item.txid);
+                        if (apiOk(r)) {
+                            try { updateWalletTransaction(item.id, { sheetSent: true, sheetSentAt: Date.now() }); } catch (e) {}
+                            removeWithdrawRetry(item.txid);
+                        }
+                    }
+                } finally { __wdRetryBusy = false; }
+            }
+            window.addEventListener('online', function () { retryPendingWithdrawRequests(); });
+            setInterval(function () { retryPendingWithdrawRequests(); }, 60000);
+            setTimeout(function () { if (isLoggedIn()) retryPendingWithdrawRequests(); }, 5000);
+
 
             // -------------------- TRADE SYNC PROFIT (approval required from the sheet) --------------------
             // عند التزامن بالصفقة: يُضاف الربح إلى إجمالي المحفظة محلياً،
