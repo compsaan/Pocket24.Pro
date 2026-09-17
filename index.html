@@ -10453,7 +10453,11 @@
             })();
 
             function apiOk(r) { return !!(r && (r.ok === true || r.status === 'success')); }
-            function apiMsg(r, fallback) { return (r && (r.message || r.error)) || fallback; }
+            function apiMsg(r, fallback) {
+                var m = (r && (r.message || r.error)) || '';
+                if (/\u0625\u062c\u0631\u0627\u0621 \u063a\u064a\u0631 \u0635\u0627\u0644\u062d|invalid action|unknown action/i.test(String(m))) m = '';
+                return m || fallback;
+            }
 
             // قراءة قيمة رقمية من صف جداول البيانات (بأسماء حقول متعددة)
             function _sheetNum(obj, keys) {
@@ -10512,7 +10516,7 @@
                     // أرباح التزامن بالصفقة تُستبعد من سجل الإيداع/السحب ومن إجمالي الإيداعات
                     const allDeposits = u.deposits;
                     const realDeposits = allDeposits.filter(function (row) {
-                        try { return !isSyncProfitRow(row); } catch (e) { return true; }
+                        try { return !isSyncProfitRow(row) && !isWithdrawalRow(row); } catch (e) { return true; }
                     });
                     u.deposits = realDeposits;
                     acc.sheetDeposits = realDeposits;
@@ -10620,7 +10624,7 @@
                     if (!Array.isArray(rows)) return;
                     rows.forEach(function (row, i) {
                         if (!row) return;
-                        try { if (isSyncProfitRow(row)) return; } catch (e) {}
+                        try { if (isSyncProfitRow(row) || isWithdrawalRow(row)) return; } catch (e) {}
 
                         var tx = _txFromSheetRow(type, row, i);
                         if (serverKeys[tx.srvKey]) return;
@@ -11380,7 +11384,27 @@
                     }
                     if (r && r.netError) return r;
                 }
-                return last || { ok: false, message: 'تعذر تسجيل طلب السحب' };
+                // احتياطي: إذا لم يكن إجراء السحب مُعرّفاً في سكربت جداول البيانات،
+                // يُسجَّل الطلب عبر الإجراء المدعوم (createDeposit) كصف سحب معلّق
+                // مع علامات واضحة (txid يبدأ بـ WD- و type=withdraw) حتى لا يُحسب إيداعاً.
+                const fbPayload = Object.assign({}, payload, {
+                    action: 'createDeposit',
+                    txid: payload.txid,
+                    transactionId: payload.txid,
+                    type: 'withdraw',
+                    kind: 'withdraw',
+                    requestType: 'withdraw_request',
+                    direction: 'out',
+                    status: 'pending',
+                    note: 'طلب سحب — بانتظار الموافقة'
+                });
+                const fb = await apiPost(fbPayload);
+                if (apiOk(fb)) {
+                    try { await syncFromSheet(); } catch (e) {}
+                    return fb;
+                }
+                if (fb && fb.netError) return fb;
+                return { ok: false, message: 'تعذر تسجيل طلب السحب في جداول البيانات' };
             }
 
             // إرسال الطلب مع إعادة المحاولة عند فشل الشبكة
@@ -11503,6 +11527,16 @@
             window.addPendingSyncProfit = addPendingSyncProfit;
 
             // صف "إيداع" ناتج عن التزامن بالصفقة (لا يظهر في سجل الإيداع/السحب)
+            // صف "سحب" وصل عبر جدول الإيداعات (احتياطي createDeposit) — لا يُحتسب إيداعاً
+            function isWithdrawalRow(row) {
+                if (!row) return false;
+                var txid = String(row.txid || row.transactionId || row.hash || '').trim().toUpperCase();
+                if (txid.indexOf('WD-') === 0) return true;
+                var t = String(row.type || row.kind || row.requestType || row.direction || '').trim().toLowerCase();
+                return ['withdraw', 'withdrawal', 'withdraw_request', 'out', 'سحب'].indexOf(t) !== -1;
+            }
+            window.isWithdrawalRow = isWithdrawalRow;
+
             function isSyncProfitRow(row) {
                 if (!row) return false;
                 var txid = String(row.txid || row.transactionId || row.hash || '').trim().toUpperCase();
