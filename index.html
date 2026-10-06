@@ -5455,6 +5455,7 @@
             box-shadow: var(--card-shadow);
             animation: wtxFadeIn 0.3s ease both;
         }
+        .wtx-silent-render, .wtx-silent-render * { animation: none !important; transition: none !important; }
         @keyframes wtxFadeIn {
             from { opacity:0; transform:translateY(8px); }
             to   { opacity:1; transform:translateY(0); }
@@ -5623,6 +5624,54 @@
 .api-msg{font-size:12px;min-height:16px;text-align:center;margin-top:4px;}
 @media(max-width:480px){.api-stats{grid-template-columns:1fr;}.api-row{flex-direction:column;align-items:stretch;}.api-btn{width:100%;}}
 </style>
+
+    <style id="p24-usdt-history-update">
+        :root {
+            --wtx-menu-bg: var(--card-bg);
+            --wtx-menu-text: var(--text-primary);
+            --wtx-menu-border: var(--border-color);
+            --wtx-danger: oklch(.56 .21 27);
+            --wtx-danger-hover: oklch(.50 .20 27);
+            --wtx-danger-soft: oklch(.97 .015 27);
+            --wtx-on-danger: oklch(1 0 0);
+            --wtx-backdrop: oklch(.18 .025 260 / .55);
+            --wtx-overlay-shadow: 0 18px 60px oklch(.15 .02 260 / .18);
+        }
+        body.dark-mode { --wtx-danger: oklch(.72 .17 27); --wtx-danger-hover: oklch(.64 .19 27); --wtx-danger-soft: oklch(.28 .045 27); --wtx-on-danger: oklch(.16 .025 27); }
+        .usdt-original-icon { display:inline-block; width:32px; height:32px; aspect-ratio:1; object-fit:cover; border-radius:50%; vertical-align:middle; flex-shrink:0; }
+        .usdt-original-icon.small { width:24px; height:24px; }
+        .usdt-original-icon.badge { width:14px; height:14px; }
+        .usdt-original-icon.history { width:42px; height:42px; }
+        .usdt-original-icon.hero { width:72px; height:72px; }
+        .wtx-icon-wrap.dep, .wtx-icon-wrap.wd, .wtx-item .wtx-icon-wrap.dep, .wtx-item .wtx-icon-wrap.wd { background:transparent; }
+        .wtx-hero-icon.dep, .wtx-hero-icon.wd { background:transparent; box-shadow:none; transform:none; }
+        .wtx-hero-icon.dep::after, .wtx-hero-icon.wd::after { display:none; }
+        .wtx-cbadge { gap:4px; }
+        .wtx-del-btn { width:34px; height:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid var(--wtx-menu-border); background:var(--input-bg); color:var(--text-muted); border-radius:8px; font-size:18px; cursor:pointer; }
+        .wtx-del-btn:hover, .wtx-del-btn[aria-expanded="true"] { color:var(--wtx-menu-text); background:var(--stat-bg); }
+        .wtx-del-btn:focus-visible, .wtx-options-menu button:focus-visible, .wtx-remove-dialog button:focus-visible { outline:2px solid var(--accent-color, var(--text-muted)); outline-offset:3px; }
+        .wtx-del-btn:disabled { opacity:.6; cursor:wait; }
+        .wtx-options-menu { position:fixed; z-index:999999; width:174px; padding:6px; border:1px solid var(--wtx-menu-border); border-radius:8px; background:var(--wtx-menu-bg); color:var(--wtx-menu-text); box-shadow:var(--wtx-overlay-shadow); }
+        .wtx-menu-remove { display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:10px; border:0; border-radius:6px; background:transparent; color:var(--wtx-danger); font:700 13px 'Tajawal',sans-serif; cursor:pointer; text-align:start; }
+        .wtx-menu-remove:hover, .wtx-menu-remove:focus-visible { background:var(--wtx-danger-soft); }
+        .wtx-remove-dialog { position:fixed; inset:0; margin:auto; width:calc(100% - 32px); max-width:380px; max-height:calc(100dvh - 32px); overflow-y:auto; padding:26px 22px 22px; border:1px solid var(--wtx-menu-border); border-radius:8px; background:var(--wtx-menu-bg); color:var(--wtx-menu-text); box-shadow:var(--wtx-overlay-shadow); font-family:'Tajawal',sans-serif; text-align:center; }
+        .wtx-remove-dialog::backdrop { background:var(--wtx-backdrop); backdrop-filter:blur(5px); }
+        .wtx-remove-dialog[open] { animation:wtxRemoveAppear .18s ease-out; }
+        .wtx-remove-close { position:absolute; top:10px; inset-inline-end:10px; width:32px; height:32px; border:0; border-radius:6px; background:transparent; color:var(--text-muted); font-size:24px; cursor:pointer; }
+        .wtx-remove-symbol { display:flex; align-items:center; justify-content:center; width:56px; height:56px; margin:0 auto 18px; border-radius:50%; background:var(--wtx-danger-soft); color:var(--wtx-danger); font-size:21px; }
+        .wtx-remove-dialog h2 { font-size:21px; line-height:1.5; margin:0 0 10px; font-weight:800; }
+        .wtx-remove-dialog p { font-size:14px; line-height:1.8; color:var(--text-muted); margin:0; }
+        .wtx-remove-summary { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:15px 0; margin:18px 0 12px; border-block:1px solid var(--wtx-menu-border); font-size:14px; }
+        .wtx-remove-summary strong { margin-inline-start:auto; overflow-wrap:anywhere; }
+        .wtx-remove-dialog .wtx-remove-warning { font-size:12px; }
+        .wtx-remove-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:22px; }
+        .wtx-remove-actions button { min-height:46px; padding:10px 8px; border-radius:6px; font:800 14px 'Tajawal',sans-serif; cursor:pointer; }
+        .wtx-remove-cancel { border:1px solid var(--wtx-menu-border); background:var(--input-bg); color:var(--wtx-menu-text); }
+        .wtx-remove-confirm { border:1px solid var(--wtx-danger); background:var(--wtx-danger); color:var(--wtx-on-danger); }
+        .wtx-remove-confirm:hover { background:var(--wtx-danger-hover); }
+        @keyframes wtxRemoveAppear { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @media(prefers-reduced-motion:reduce) { .wtx-remove-dialog[open] { animation:none; } }
+    </style>
 </head>
 <body>
     <div class="app-container" id="appContainer">
@@ -6309,7 +6358,7 @@
                     <p>خطوة واحدة تفصلك عن محفظة Pocket24: أنشئ حسابك وابدأ بتفعيل خطط الأرباح اليومية.</p>
                     <div class="auth-badges">
                         <span class="auth-badge"><i class="fas fa-check"></i> تسجيل بدون رسوم</span>
-                        <span class="auth-badge"><i class="fas fa-wallet"></i> محفظة USDT</span>
+                        <span class="auth-badge"><img class="usdt-original-icon badge" src="data:image/jpeg;base64,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" alt="USDT" width="14" height="14"> محفظة USDT</span>
                         <span class="auth-badge"><i class="fas fa-gift"></i> مكافآت إحالة</span>
                     </div>
                 </div>
@@ -8605,6 +8654,98 @@
                 } catch(e) {}
             }
 
+            // Original USDT artwork is embedded so this HTML remains a single portable file.
+            var USDT_ORIGINAL_ICON = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/4QB0RXhpZgAATU0AKgAAAAgABQEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAAITAAMAAAABAAEAAMb+AAIAAAARAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABR29vZ2xlIEluYy4gMjAxNgAA/+ICKElDQ19QUk9GSUxFAAEBAAACGAAAAAACEAAAbW50clJHQiBYWVogAAAAAAAAAAAAAAAAYWNzcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAPbWAAEAAAAA0y0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJZGVzYwAAAPAAAAB0clhZWgAAAWQAAAAUZ1hZWgAAAXgAAAAUYlhZWgAAAYwAAAAUclRSQwAAAaAAAAAoZ1RSQwAAAaAAAAAoYlRSQwAAAaAAAAAod3RwdAAAAcgAAAAUY3BydAAAAdwAAAA8bWx1YwAAAAAAAAABAAAADGVuVVMAAABYAAAAHABzAFIARwBCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9wYXJhAAAAAAAEAAAAAmZmAADypwAADVkAABPQAAAKWwAAAAAAAAAAWFlaIAAAAAAAAPbWAAEAAAAA0y1tbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wgARCAFAAUADASIAAhEBAxEB/8QAGwABAAIDAQEAAAAAAAAAAAAAAAUGAQQHAwL/xAAZAQEAAwEBAAAAAAAAAAAAAAAAAQQFAwL/2gAMAwEAAhADEAAAAeUgAAAAybcRqfVqnJqUqVs5ViNzbTw8/Qc3n6DU05c6ViKviO/MvnpEGt1Nt6kWsCZAAAAAAAZBsS9rVIadynNBzAAAAAAAxBTx05xr9KqkaUBj6wt4AAAABk9j4t+zKMwJogAAAAAAAAAAQVQ6ZFxeoj28WngAADLJ9XjWnWYE0QAAAAAAAAAAAARF0fpkFF+m4+sNPAAMz0T0JU9sE5IAB6771FpQ9RaUEWlBFpQRaUEWlBFpQRaUEWlI958w8gM4FOgelc9jW1gt5NuIs09jPrDBzAAl+h886HGoC6AAAAAAA5p0vmijoCcwABAz2HTmLb1PO4tlV6NNT3E5QAAEv0PnnQ41AXQAAAAAAHNOlc1UdATmAAAVyp9I5zGrI3ysWdVCagAAHvJQx7mUMeplDCZn6PbHa3CNYEVeG2q5OTMoY5TKGEzFeZ4B5AAAUO+ViLchL6m3PAHMAAAep5JXYdIJOkwVs0J13sAjVApFcukROTBJ04wSc1kRj083MAAABES+o6e/oOYAA9DM9aqAuSmvCnDZ1hzBC2VO2LFuEbIFIrljrk4jODjna1CZv3rp0sMDJ3F35wzhTAAefoDz9AAB9fIv31z+UXfWJt0oc6dD03mkLZrOdcs+r5Jvf1z/AAt9B+aBk26/MeqpBLJsoqS8bjpz+Ys8W9S2hWo4BSAAHmeG3ES7oDmAAAzgfe5oHqa2a4e7VM88tizbWUaTGRCRPjXJzLFrQxX3tP5OYIAAAAam3EOkfZ6HfI7hNQAAAAABbKnbFi3CNkCkVyyVucQHEAAAAABWLPQ4tx3Rub2xasYnKAAAAAAWyp2xYtwjZApNbslbnEBxAAAAAA8Oc2qpxqtvURb6dmBnvWGDmAAAAAtlTtixbhGyBSa3ZK3OIDiAAAAAxmBdKzqHncwJnZ6FzWfVLgzickAAAABbKna1i3sI2MsClVux1ycUHEAAAADy57LQMa2AtgZz85LlO8zvDMlBNEAAABnA+nyPp8jOAAAAABCC2aPF/wCDDTAAAz7eIvcpzO3sydE0QAAAAAAAAAAEXrVCL334jTwAAAADLGSftfNdhU6OgZ2c3IcwAAAAAADEE6TNUiNeNLOGFsAAAAAAADO3qIi2TnN/qanTVDlVWzojcnhtvP0cx5no1NN0l1Yio73WDqvytbeoRbwJkAAAD//EACYQAAEEAQIGAwEBAAAAAAAAAAMAAQIEBSAwERMUFTRAEBIxIVD/2gAIAQEAAQUC3Wbih0jkUMWoY8EVGsGKaEW+XhF1KsGSnjwSU8WiUjjTtw9kICGcOMiyEIYm3CCGVjYyLo1cgX9QIZmlXx0IpmZm9B2Z2sY6EkYMwy9GpQkRDHEcfUIOJI26Eh78WeT0qLD9m7RYikzxfbhB5ypVIgj7V2o1iM4PCWzGLyelVYEfcvVWPGTPF9jG1eXH3slV5kdeMrcyf+Bk63LnpANzFFBhj1DhIk+gsroLK6CyugsroLK6CyugsroLK6CyugsroLK6CyugsroLK6CyugsroLK6CypxeEtRYMQZxuIujFA+o9eK870r3ma8qD7D+awucZm4NrxXnele8zW7cWsi5JvjDi4Q2MV53pXvM2MwLjBN/XAPlB2MV53pXvM2Dj5oXbg+OhzLeyIkhE7lZXcrK7lZXcrK7lZXcrKxVkljTlLZQG7lZXcrK7lZXcrK7lZXcrKJNyT2cjDl28ND0cF+6M35HoZmCxUeFT0MD+6M55HoZWPGpUb61dqEJTUKFmS7dJl0taK+lBl9seyxcgS05Kddjcce65dB10laS7dN1OjYgpRlHbuNxqj/AIPWMciShjvpHn0wqeRO6mcs9OB/dGc8jRCwaChkjJiUjomNl9ZReEtZP6PWOP3nXBAA7ZZlPrwP7ozfka8aWcLNytGwPfZ+D0r0DtbojsI2OONSi8X04WcYPzYL7xX3iubBZmUZWNMISm4caciq0x1mv34DjsD/AKPYBeOFCy0HUbVUyenVIpYoLqWIT4kqfGWGXbbK7fZXQWV0FldvspsbZTYuwmxJVHEKOKAyapVEpXKomLlmR7hjbJP4Om/Grtxk8VG3Yio5KyybLGTZd1RudVpu3ulI+XknyplLJWXUrR5J3d9y2/CripcanoYH90ZvyPQysvrUw0/RwP7ozfkehmZrHT5dv0MD+6M35HoZGfMtt/HATmh38D+6M35G+cnKC78XWHLxhv4H90ZvyN/MF4Q+KxeSZn4tvYH90ZvyN534NZLzjfOKP9x72B/dGb8jeyp/qPQAjiKKbEHu4H90ZvyN0s2GM5HKTTjLPLnu4L90ZvyN3J2eZPXjbXMju8XXF1xdcX3sla5cdiMni9G0x4e5etMCMpPJ9mE3hKlbiePtXbcQRnN5y24u8XpXmJ7N28w1J3k+9UvyGhkiSPqEJEcbd+RPSEWYpV8jCSZ2dvQd2ZrGRhBFNMsvUDYIFBycXQzDK24QwxMbJxZGOQz+wz8EO6caHlFHIAko2QyTTi/y84spWQsp5AEVPKIl05E78d7/xAAnEQABAwIEBwEBAQAAAAAAAAABAAIDBBESEyAxECEiMDNBUTIUUv/aAAgBAwEBPwHSSBzKfWMbtzTqx52Rmedyr3V0JnjYptY8bplYx2/JAg8x2pqoM5N3T5XSb9mOV0Z6VDVB/J2/YqKq/Szu09Vbpfqqqi/Q3v0tRbodoqpsAwjfQGOdsFlP+LKf8WU/4sp/xZT/AIsp/wAWU/4sp/xFjm7jRSzY24TvwJsLlSyGR19FF+OzXfkaIn5bsSBuLhVj8LLfdNF+OzXfkaaN+JlvirHXfbS2Rzdis6T6s6T6qeV7pACeM8rxIQCs6T6s6T6nSOdudNG6z7KY3eTptdCF59LJKp47SDnxnju881klGJ49K2mE2eCjxHNOibA27uZRmd65IuJ34UvkHGo8h4BxGyEzvfNCFszcTOWgI6G1TXDDKFkRP/DkaN/pGmkHpRskjdiwr+mT/C/pk/wnxySOxYUKaQ+kKN/tZMLP25PqgBhjGgKUWeRqDnDZCeQe1Tzvc8AnjNUSNeQCjPIfaLid9UIu8BVjbPv2KXyDjUeQ9ijbd91WMxMv87FL5BxqPIexRswsv9RFxYqWMxuw66XyDjUeQ64mZjrICwsOFVDjbiG+ul8gV1dVHkOulhwNxHfRVU9utuu6vrpae/W7VUUtupndp6W/U/sTUrX827p8To9+zHE6Q9KhpQzm7ftEA8in0bHbck6jkGyML27hWsrIQvOwTaN53TKNjd+aAA21f//EABQRAQAAAAAAAAAAAAAAAAAAAID/2gAIAQIBAT8BSH//xAA0EAABAgIGCQQCAgIDAAAAAAABAAIDESEwMUBRkRIgIjIzYXFygRMjQaEEEEKSFIJQUmL/2gAIAQEABj8CraFuSHNe5EyCpBd1KohNVDW5fulrclTCaqAW9CvbiZhbkxyVN59ts+anGdPkF7bAK33GAr2XS5Fe42V1lDEypxto4fCkKBcZGkKcLZOHwpRBK5B0XZZ9laLBIXXReJhF0Lab9ivAFJQfFpfhheS+FQ/DFSNBrA1omSpmmJje5iiJii1wkRVSAmVM8Q232Y4gsUiJGp9R42zZyv8A6jBti3nUeo8bDfv/AIH1GDYd9azWNtKDG2DXDWCblwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmFwjmEWuEiNcsdYUWOtGr6htdZ0qIfm5xu6o9QWtt6ajWYqQsqIfm5xu6okbE5mH7dFPzQKmH5ucbuqWxR8UH9sZgKmH5ucbuqXsxH6ZgKaoPZvBb4/qt8ZLfGS3xkt8ZLfH9VE9UzlL41WiGQBLBb4/qt8ZLfGS3xkt8ZLfH9UXOtNU/A0qI/wAXGN41Wdtxhv8ACBxM7jG8arO24k4GahDlV7DS7oFw5dV7kaEzytv8seAqYsV3hbkUqJ/jw3MsnPVaPyIbnGVoW7GCojRG9Qtj8tvkL24kJ/lUwyelK2gR1q4o5Jo5VGixpcVp/lRQwcl7MH1Di5bOiwcgtqI4+dWN41WdursxXjypRA2IOYXuQzBdi1aX47xEatFwIPOocOVQ1o+TJaLB1OKcYnwZSwqI3jVZ21DGtscZEKR3vg3AEWhBrjoxMMVpbr8QqG6Y/wDKk4EddaLpOAstW+3NbwzW8FvtzTNEg7PxrSY0u6LaGgOamKXf9iiyEZvxwqW9Kmh2k3By91hHSlS02Hk5cNv+q2XPC2Y2YVD2FfwPlbgzXC+wuEVwiuF9hbgzX8B5VMRi2o2QVJe7yuGz/ZS029Gr2oc+5bT6MBUuPJQjyrNkkdFRFct5p6hUsYVTBGafsaOjz1Q3Q0pidqohDNUNYFvAdAqYr81SZ1kU8kBgZXGN41WdtxIxMlEZ5uMbxqs7bjDZ5TMDRcY3jVZ23F+Ao/TH4i4RvGqztuD34D9uhH4pFwjeNVnbcGwh80n9tfgpiyvjeNVnbXzNic/HU9M2ts6V8bxqs7a/0ha63pqh7bQg9thro3jVZ21xe6wIvdadb03nYd9V0bxqs7a702brfuo9N52xZzrrSrSrSrTXemw7Zt5VMwaVI8QW32Q4hsUyZmqDmmRCkaImF7kKYmCLnGZNZMUFBkWh+ON5LYVL8cESaTX6MXaZ9haTDMXXSeZBaMLZb9m5ThmSlF2Tj8KYpFxmaApQto4/CnEM7rsOkpRmy5he28Gt23gL2Wz5le46d635jmtuHkqSW9QqIrVQ5uf7pc3NUxWqgl3QL24ea35Dkqa7/8QAKhAAAQIDBwQDAQEBAAAAAAAAAQARITFhIDBAQVFx8IGxwfGRodHhEFD/2gAIAQEAAT8hvSEwEmijwLWhR8nZU2JHdiHUmWwJgJBMDMKbLcF2YhlNiQfJ2VHiWtGiEwMa4lsFD4Dqmwg9kfKZFTAjetjcxFPBIe6PlNAoa5HrhXDewmk1NJ+oSCASAGBIggkwQnk9dN+Jw0u+BAUdWUEC4Y8hhTcM+RUdWmgi+GSSFgAg4InDJiQcETjkQ5CQFiDeG5QQAQEyaeigxcCIpaqFG5TQN0AlELABQ2mY0pjYLRMa0RSUAsQbgTTZpgcmPfNMhkRnbzIEKv8Ag5kCNSNmfAfCDqwmtv5qQXGPK5x5XOPK5x5XOPK5x5XOPK5x5XOPK5x5XOPK5x5XOPK5x5XOPK5x5XOPK4x5TtJMRpbDq42U/Q+bL2PLouHEpgivsLhrHl1WBg2aNAgCAwQAuOJRDAlfcXAjAcoEIxLNA6jL/WQR/queJRDBfcXLII/xf4BABMwQAGl1ueJRDBfYXICGkN0QgMxBMg6vpdHxAkEh16UvS16WvS16WvSkaayTM1sk3h5d2a9KXpa9LXpa9LXoSJe53N0yBoeqjGoOB5e9nn1wMYVT7rVg3hgeDvZ49cDqYLwW2E3ZZurCkJBWAu5hM0zopnEKM8Idwz/UWgCZd52CpWhyswfdHtaUx+yPC7DNJt8Iv2SUOsfoa73YlBQhH1cC+iIQaI/6RgSj2/tDWpSvuesuPvZ49bAgXECvgYiQAoKosxxtfX4jnfSEijwN5BcDUjH0gGAtlmoQIa7oKqPoXIFxcPezz63B+SdM90fhAEbakWNsxBQiBbMcsRwUHlmlLYjzO/bpyINT8JzF0BrUebgczzQLInR/mveohn8BFQbqPnacAtAdNhF8/wCE1EnnM/iGePBkv7uDAFE51E/VyyBkqKAF9YSCO6A7qOjcJuy78IP+Ii+SCl3QU6t0oiQ9kF7IIG/SNDdKMn1FKkNgSg5ifEYUYIKxd02kLJfsgwQaomQMgw24uSoRn6WzEXhJylTLvrLqaIonkgs/Nv5QmgULU72ROeYQIyW3U4d2KkO3V2/MRlzFUveb8QtWDeWB4e9nn1wOoAvJRjUHtgeHvZ59cDGFU06DqeuB4e9nn1wLoGh6IyAiYigANY74Dh72efXAAIa3VEITMx/x0Ef6sBw97PPrgHQR/i/0wLNEahAERyDg3/D3s8+t+I5GCJKMSzQGgysPJ8+q/cPezz637WXPsk3Q+UXVxvfcPezz63xdWG6m+HxZCzYEDqvuXunTp0659b6NEaNVsGKZtcDkvQSJEjYr2C9gvYL2CJJmSb181yGRGdwAlAC4IUHIkNa42C0yGlUQlELkm6NiigQgJkU9VRi4CzS0VKNyiiTeDJSAuCEGJEoZcSDliUciHJJC5JvgU2vayBcM+YwpuGPMp9e10E4F90u6aR0034gIoJIjAkRQDMp4HXSfqedPthTDnoyPRNjh0/hPChgxvXhSyYp8BS6PwnwUNMh0xJCcEg0UOBaUaLlbmp8SO7EspstgQIMiiQJlSZbguzkupsSD5O5qHEtKFEJyJNb7/9oADAMBAAIAAwAAABDzzzzw7W4211x7w7zzzzzzzyTRzzzzzzzzzzhDzzzzwC/zzzzzzzzzzzx8DzzyDfzzzzzzzzzzzzz3tDzzxzzz3zzzzzzzzjzyzzxbzzzwPzzzzzzzwLzzzyq3zzzwPzzzzzzzwrzzzz3bzzzwwwxnyk0wx3zzzzpTzzzznHGXyjzXnXzzzyjXzz3F37yjyj2w233Tzzl3zyz0nz3EABz32nTzzy1Tzzzyww0j1lz03zzzzyh7zzzzzzyjyjXzzzzzzy6nzzzzzzyjyhXzzzzzzzVbzzzzzzyjyhXzzzzzzyrzjTzzzzyz2J3zzzzzzzzwh/zzzzzw03zzzzz2eTzzwDvzzzzzzzzzzzzcDzzzzxh3TzzzzzzzzywTzzzzzzzzJ3rDnXDa3Lzzzzz/xAAnEQEAAQIFBQEBAAMBAAAAAAABABEhIDAxYaEQQVFxkbGBwdHw8f/aAAgBAwEBPxDCDUoS2XuJ28TW2K1MEaM1t+zt5lsvQGpUyq/c4Eaq6/mTUipKPY4ONQKsStKHd85q0pU8wRKmGtUsavnPrRLOj4wX9u4MBlWZvfk3vyb35N78m9+Te/Jvfk3vyEVYwX5s5OgtoEQvvg1PeTyv8YFEdvyCWgy2dcLX95PKw3zrHrxhDowTezexgSdXQBN7N7A6M4ffie3nCKwJ/sEO6h/SAyl2OjAdSe//ACeFH+kujCizh9vEVVeoVQhg6nbtF2tbEuCrj31JSaOkbxSVR27RKWeqojBRR6jRqS8QeY3FDZ/4gtQ9GkKjSbjmbjmMKhXoxV2EL2psS08eZ76iqE9/OEtNUJ/ZojlXsMpKSkECao5qxf7i9vE9+Mvc/I9eJbOuW3PyL51/EFtBiFdsrc/Gonv+QC0DpbmzkyFRKMj2pu4MFahZ1PGOrzKvM1xMwLGhhQSjErC3czVYFDsQAKGOq2ODGqGn5k0IJR7nAygaFSXy9xHdDNaYrUQToTW35O3iXy9AaChi/8QAHBEAAgMBAQEBAAAAAAAAAAAAAREAIDAQMUAh/9oACAECAQE/ELJxRDqEUSzUWKiwA1IsBuRQfCeihxFDwftTiKmDA5mDzA5ny74flWY8+M+QYHMwfmBzPBc5HouYosDQHcmwOpODjxcebjjHWI47/wD/xAApEAEAAQIEBAcBAQEAAAAAAAABEQAhMUFRoTBhcZEQIECBscHw0fHh/9oACAEBAAE/EOIUdQMAStCCBmx7N9qZCDqt3+VCJzOEfYioLCYMrea2OV9UEsHQpJYepW5ivqgnE4sruVKLzNEPZmiSo6Lc/lTghnx7F9qeoDEEJT6eKhwmKt1FaiIES7wru1CiPUOq34rgjETYdEvRuSj/ALArQwhv0Baovh6MJzoJndBYargUbcebx1M9lYBECA9vQ2iIAI+1H3Pm89DOiTK9Sw1HBpIcaeNDSOFEyJeGA+jnWU3gx5rm830uQ3gw5jk86LAW7GQ+znSGNRxGoUpglWsUEDfq6ux6nDBA26ejs0q8wEI08IppKQErUaQ6gfxfP1bWIeUfxfKmmBALnBMaiGGCVdKi8LZuHR9ufrYPD3bB1fTlUY4wQjpTj5ooTCgtoya759X49eFtCTXPPqfFCIVHlKO8LAltHoYvtT68o7YsBho9HE96EeUSsFOQzXoVYkE56rzcfOrWTCgsEuPosgQIECBAgQIECBAgQIECMVMZ5LNGXt57moGponMxoV8FOQyTqeQ0om4xjIz9/g4G1+WjD0ODg+kucIzM/b7adPGdOLnQuvaivBAZBYOBtfl9EwcFwXgqMxslTdp1Iuu3hEUVyGXkXXeD24O1+X0Rw4TiuQy8m67ye9RRhKkDWaKMsKM8S954O1+WkRUmtSa1JrUmtSa1M+RQqSpNak1qTWpNak1pSOFogxkkyxD3iiCRJGkVGyUS5XG8VPBmXpAC5DZ84AQQQUA3BLJCbsOhWfilQHzwXSM/OAEEEEgAyUwgXpwhAwoHK53mrFYCOt34PQ7ak8XGv2c/oeaQjpZ8tScQu5mD4fQ7Ok8Wvyc9Xq/Hs0o7pi+atJF4c2/3wmg6LnfAqNdVbLM0HELMVfqsEYyb9tFoNrUC4/ofAoXgMvJWbhejDxzUmGTxkLYM61S5oxu0jTXMok2bkLdJTPE5TD91PIxmHwZrkNp1vwwjptDmX+qtxGxDgJiGTMc3T3qHp4sL0laeg082YDXPd8FLHw4eT3aWY/RY7Fqbst3Vrp47Ck8W9fk5/JugLNRkQYSjsyUGzECL7n8oZiQTH+Z0JGKURDkjDtTehvETgWcnclUQ0I86eA5OArE0H8z7gVHjpLAjEB8ufA2VJ4uNfs5+AT7uIQ7ExmmsiQLvTo6UilhGE85hakU5GpPnXIADERkaIEAFwmq+saRSPkSdLPrjTYTwSXuv80wEcwt/MVum02Lomtmb+1D4P7P7SeJe3+1NQev9qJLIqIGVreXnhQZBza2pBDYqmPIfcU+AUZRmBgKAW61nWZz5KPfzuVoTRgsnchwSlchxDk4neo7MpjsMNR9jiMuwoxvOc+aKlJfSJuVaWZyPtGhu+fwawR1D7CifG/vWpeifdJ/j3qf8e9fw4+6RiLmf3Xy6H4K/VYdKtHnATdahVo1A2KHIjnW+6q0EwfQopoNlEdiXenjPEO9F334N/o2JVBjN48y31w96gQ2CvwqInhlH3mthx+ooAOcH9KDiHNPlUkiBs5pyNKgqDSoNKg0pxNyzLxGDW6EvwFQxzVPsqehPyvNTMs0g7RSjURlvxCnotHm2+6k5n2dg+X0OypKnwca/Zz+hhZgdzMXwVdLEB0u+T0OypPFxr9nP6G5WADrY+Gp2QqnYbx6HZUni41+zn9CKGVE5WO80oUJB0imDLEGWBO8+g2VJ4uNfs5/QMnEgnPAHeKYJUk6zUzRXIYeTYd4ff0GypPFxr9nP6ArlMPIsO8vtU+E7adSLJ2orwQMxuPH2VJ4uNfs5+OE4KjILrU3YdCLDt4mtEnOMZmXt98fZUni41+zn44NRhGQcPd+KdfI++KjIZj1Ks6gamo8zDjbKk8XGv2c/Gv6Aaugc3CnexUGAyDoeVY0VsXA2/i4PtTxUEjlTHUqOp3qOp3qOp3pTAz/14pQ65gbavQwPelnylQSorKMOueXU+OLuABX+1r/aV/tK/wBpSEoc2eKFtiGY+XV2KUyqfMVMOcEI61KoezYOj7MvWyeHu3Dq+jOphgglXWnHgFNZTMCo0j0D9MMvVuoB5B/Fs6aYkhd4bQrRIQjWKiAt19HZ9Tghgb9PV2KUOJCVazpx4ctIYUTEFich9nKs7vBhyTJ5Ppc7HBi6Bm8iiZlszgPo5Uji1Lx55UewvYbDRMGjbnReepnurGIwRH3PQkRCVAD3oy50XjoZ7KbZWi2GgYFLfD0c3xqDqzd+srVMDnXe5f5ohaOgdRvxWVsziHsXojJFa9mJ2qHDYYegLVN8X05R0QwVCUYAGTHu33qwHaw9n+1GDTKU7k1BTZwJW9B9xX3QFh6NASB1aD7CvupPA5StqlA9bAH3YpkgOr2P7U4oZce5fenqBiqVp4v/2Q==';
+            function usdtIconHTML(size){
+                return '<img class="usdt-original-icon '+(size || '')+'" src="'+USDT_ORIGINAL_ICON+'" alt="USDT" width="32" height="32" draggable="false">';
+            }
+            var walletMenuClose = null;
+            function openWalletTxMenu(trigger){
+                var same = trigger.getAttribute('aria-expanded') === 'true';
+                if(walletMenuClose) walletMenuClose();
+                if(same) return;
+                var menu = document.createElement('div');
+                menu.className = 'wtx-options-menu';
+                menu.setAttribute('role', 'menu');
+                menu.setAttribute('aria-label', 'خيارات العملية');
+                menu.dir = 'rtl';
+                var action = document.createElement('button');
+                action.type = 'button';
+                action.className = 'wtx-menu-remove';
+                action.setAttribute('role', 'menuitem');
+                action.setAttribute('data-wtx-del', trigger.getAttribute('data-wtx-menu'));
+                action._wtxOrigin = trigger;
+                action.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i><span>حذف من السجل</span>';
+                menu.appendChild(action);
+                document.body.appendChild(menu);
+                trigger.setAttribute('aria-expanded', 'true');
+                function place(){
+                    var rect = trigger.getBoundingClientRect();
+                    var width = menu.offsetWidth, height = menu.offsetHeight;
+                    menu.style.left = Math.max(12, Math.min(rect.left, window.innerWidth-width-12))+'px';
+                    menu.style.top = (rect.bottom+8+height < window.innerHeight-12 ? rect.bottom+8 : Math.max(12,rect.top-height-8))+'px';
+                }
+                function close(restore){
+                    menu.remove();
+                    trigger.setAttribute('aria-expanded', 'false');
+                    document.removeEventListener('pointerdown', outside, true);
+                    document.removeEventListener('keydown', keys, true);
+                    window.removeEventListener('resize', dismiss);
+                    window.removeEventListener('scroll', dismiss, true);
+                    walletMenuClose = null;
+                    if(restore && trigger.isConnected) trigger.focus();
+                }
+                function outside(e){ if(!menu.contains(e.target) && !trigger.contains(e.target)) close(false); }
+                function keys(e){
+                    if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); close(true); }
+                    else if(e.key==='Tab') close(false);
+                    else if(e.key==='ArrowDown' || e.key==='ArrowUp'){ e.preventDefault(); action.focus(); }
+                }
+                function dismiss(){ close(false); }
+                walletMenuClose = close;
+                place();
+                document.addEventListener('pointerdown', outside, true);
+                document.addEventListener('keydown', keys, true);
+                window.addEventListener('resize', dismiss);
+                window.addEventListener('scroll', dismiss, true);
+                action.focus();
+            }
+            function confirmWalletTxRemoval(tx, trigger){
+                if(walletMenuClose) walletMenuClose();
+                return new Promise(function(resolve){
+                    var dialog = document.createElement('dialog');
+                    dialog.className = 'wtx-remove-dialog';
+                    dialog.dir = 'rtl';
+                    dialog.setAttribute('aria-labelledby', 'wtx-remove-title');
+                    dialog.setAttribute('aria-describedby', 'wtx-remove-description');
+                    dialog.innerHTML = '<form method="dialog">'
+                        +'<button type="submit" value="cancel" class="wtx-remove-close" aria-label="إغلاق">×</button>'
+                        +'<div class="wtx-remove-symbol"><i class="fas fa-trash-alt" aria-hidden="true"></i></div>'
+                        +'<h2 id="wtx-remove-title">حذف العملية من السجل؟</h2>'
+                        +'<p id="wtx-remove-description">سيتم إزالة هذه العملية من سجل المعاملات فقط، ولن يتغيّر رصيدك.</p>'
+                        +'<div class="wtx-remove-summary">'+usdtIconHTML('small')+'<span class="wtx-remove-type"></span><strong dir="ltr"></strong></div>'
+                        +'<p class="wtx-remove-warning">لا يمكن التراجع عن هذا الإجراء.</p>'
+                        +'<div class="wtx-remove-actions"><button type="submit" value="cancel" class="wtx-remove-cancel" autofocus>إلغاء</button>'
+                        +'<button type="submit" value="delete" class="wtx-remove-confirm">حذف من السجل</button></div></form>';
+                    dialog.querySelector('.wtx-remove-type').textContent = tx.type==='deposit' ? 'إيداع' : (tx.type==='withdraw' ? 'سحب' : 'عملية');
+                    dialog.querySelector('.wtx-remove-summary strong').textContent = parseFloat(tx.amount || 0).toFixed(2)+' '+(tx.currency || 'USDT');
+                    dialog.addEventListener('click', function(e){
+                        if(e.target===dialog){
+                            var r=dialog.getBoundingClientRect();
+                            if(e.clientX<r.left || e.clientX>r.right || e.clientY<r.top || e.clientY>r.bottom) dialog.close('cancel');
+                        }
+                    });
+                    dialog.addEventListener('close', function(){
+                        var approved = dialog.returnValue === 'delete';
+                        dialog.remove();
+                        if(trigger && trigger.isConnected) trigger.focus();
+                        resolve(approved);
+                    }, {once:true});
+                    document.body.appendChild(dialog);
+                    dialog.showModal();
+                });
+            }
+
             // ══ WALLET TRANSACTION HELPERS ══
             function _wtxKey(){
                 var a=getSavedAccount();
@@ -8785,7 +8926,7 @@
                     var depositPageOpen = walletPage && walletPage.classList.contains('active') &&
                         document.querySelector('.wallet-tab.active')?.dataset.walletTab === 'deposit';
                     if (depositPageOpen && typeof renderWalletTabContent === 'function') {
-                        renderWalletTabContent();
+                        renderWalletTabContent({ background: true });
                     }
                 } catch(e) {}
             }
@@ -8807,9 +8948,9 @@
                 if(tx.type==='withdraw' && statusKey==='pending'){ SL.pending = 'سحب معلق'; }
                 var statusIcon = statusKey==='done' ? 'fa-check-circle' : (statusKey==='failed' ? 'fa-times-circle' : 'fa-clock');
                 var heroIconHTML = tx.type==='deposit'
-                    ? '<span class="usdt-t">₮</span>'
+                    ? usdtIconHTML('hero')
                     : (tx.type==='withdraw'
-                        ? '<span class="usdt-t">₮</span>'
+                        ? usdtIconHTML('hero')
                         : '<i class="fas fa-exchange-alt"></i>');
                 var shortAddr = tx.address ? (tx.address.length>22 ? tx.address.slice(0,10)+'...'+tx.address.slice(-8) : tx.address) : '';
                 var shortId   = tx.id ? (tx.id.length>26 ? tx.id.slice(0,12)+'...'+tx.id.slice(-10) : tx.id) : '';
@@ -8902,14 +9043,22 @@
                 });
                 document.body.appendChild(overlay);
             }
-            document.addEventListener('click', function(e){
+            document.addEventListener('click', async function(e){
+                var trigger = e.target.closest('[data-wtx-menu]');
+                if(trigger){
+                    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                    if(!trigger.disabled) openWalletTxMenu(trigger);
+                    return;
+                }
                 var del = e.target.closest('[data-wtx-del]');
                 if(!del) return;
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
                 var id = del.getAttribute('data-wtx-del');
-                if(!confirm('هل تريد حذف هذه العملية من السجل؟')) return;
-                var tx = getWalletTransactions().find(function(x){return String(x.id)===String(id);}) || {};
+                var tx = getWalletTransactions().find(function(x){return String(x.id)===String(id);});
+                if(!tx){ if(walletMenuClose) walletMenuClose(); return; }
+                del = del._wtxOrigin || del;
                 var item = del.closest('.wtx-item');
+                if(!await confirmWalletTxRemoval(tx, del)) return;
                 var finish = function(msg){
                     try{ if(tx.txid){ var hs=JSON.parse(localStorage.getItem(_wtxKey()+'_hidden')||'[]'); if(hs.indexOf(String(tx.txid).toUpperCase())<0){ hs.push(String(tx.txid).toUpperCase()); localStorage.setItem(_wtxKey()+'_hidden', JSON.stringify(hs)); } } }catch(eh){}
                     saveWalletTransactions(getWalletTransactions().filter(function(x){return String(x.id)!==String(id);}));
@@ -8930,12 +9079,12 @@
                             }catch(e2){}
                             finish('تم حذف العملية من السجل وبقي رصيدك كما هو');
                         } else {
-                            del.disabled=false; del.innerHTML='<i class="fas fa-trash-alt"></i>';
+                            del.disabled=false; del.innerHTML='<i class="fas fa-ellipsis-v" aria-hidden="true"></i>';
                             try{ showToast((r&&r.message)||'تعذر حذف العملية من الجداول', true, 'error'); }catch(e3){}
                         }
                     })
                     .catch(function(){
-                        del.disabled=false; del.innerHTML='<i class="fas fa-trash-alt"></i>';
+                        del.disabled=false; del.innerHTML='<i class="fas fa-ellipsis-v" aria-hidden="true"></i>';
                         try{ showToast('تعذر الاتصال، حاول مرة أخرى', true, 'error'); }catch(e4){}
                     });
             }, true);
@@ -8972,23 +9121,59 @@
                 var amt=parseFloat(tx.amount||0).toFixed(2);
                 var dt=_wtxFmt(tx.ts);
                 return '<div class="wtx-item" data-wtx-id="'+(tx.id||'')+'">'
-                    +'<div class="wtx-icon-wrap '+ti.c+'"><i class="'+ti.i+'"></i></div>'
+                    +'<div class="wtx-icon-wrap '+ti.c+'">'+((tx.type==='deposit' || tx.type==='withdraw') ? usdtIconHTML('history') : '<i class="'+ti.i+'"></i>')+'</div>'
                     +'<div class="wtx-body">'
                     +'<div class="wtx-row1"><span class="wtx-type">'+ti.l+'</span>'
                     +'<span class="wtx-amount '+ti.a+'">'+ti.s+sym+amt+'</span></div>'
                     +'<div class="wtx-row2"><div class="wtx-meta">'
-                    +'<span class="wtx-cbadge"><i class="fas fa-coins" style="font-size:9px;"></i>&nbsp;'+cur+'·'+net+'</span>'
+                    +'<span class="wtx-cbadge">'+(String(cur).toUpperCase()==='USDT' ? usdtIconHTML('badge') : '<i class="fas fa-coins"></i>')+cur+'·'+net+'</span>'
                     +'<span>'+dt+'</span></div>'
                     +'<span class="wtx-status '+si.c+'">'+si.l+'</span>'
                     +'</div>'
                     +'<span class="wtx-card-hint"><i class="fas fa-hand-pointer" style="font-size:9px;margin-left:3px;"></i> اضغط لعرض التفاصيل الكاملة</span>'
                     +'</div>'
-                    +'<button type="button" class="wtx-del-btn" data-wtx-del="'+(tx.id||'')+'" aria-label="حذف العملية"><i class="fas fa-trash-alt"></i></button>'
+                    +'<button type="button" class="wtx-del-btn" data-wtx-menu="'+(tx.id||'')+'" aria-label="خيارات العملية" aria-haspopup="menu" aria-expanded="false"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button>'
                     +'<span class="wtx-card-arrow" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>'
                     +'</div>';
             }
 
-            function renderWalletTabContent() {
+            // ===== عرض صامت للسجل: لا يعاد رسم المحتوى في الخلفية إلا عند تغيّر البيانات فعلياً =====
+            var __walletBgRender = false;
+            var __walletLastSig = null;
+            function _walletRenderSignature() {
+                var tab = document.querySelector('.wallet-tab.active')?.dataset.walletTab || 'overview';
+                var lang = '';
+                try { lang = document.documentElement.lang || ''; } catch (e) {}
+                var acc = null;
+                try { acc = getSavedAccount(); } catch (e) {}
+                var txs = [];
+                try { txs = getWalletTransactions(); } catch (e) {}
+                return tab + '|' + lang + '|' + (balanceHidden ? 1 : 0) + '|' + JSON.stringify(acc) + '|' + JSON.stringify(txs);
+            }
+            function renderWalletTabContent(opts) {
+                var container = document.getElementById('walletTabContent');
+                if (!container) return;
+                var background = __walletBgRender || !!(opts && opts.background === true);
+                if (background) {
+                    var page = document.getElementById('walletPage');
+                    // صفحة المحفظة مخفية: لا نرسم شيئاً الآن، وسيُرسم عند فتحها
+                    if (!page || !page.classList.contains('active')) { __walletLastSig = null; return; }
+                    var sigBg = _walletRenderSignature();
+                    if (sigBg === __walletLastSig && container.innerHTML.trim()) return;
+                    // البيانات تغيّرت: إعادة رسم بدون حركات ظهور ومع حفظ موضع التمرير
+                    var scrollers = [page, container, container.parentElement, document.scrollingElement].filter(Boolean);
+                    var saved = scrollers.map(function (el) { return el.scrollTop; });
+                    container.classList.add('wtx-silent-render');
+                    __renderWalletTabContentRaw();
+                    scrollers.forEach(function (el, i) { el.scrollTop = saved[i]; });
+                    requestAnimationFrame(function () { requestAnimationFrame(function () { container.classList.remove('wtx-silent-render'); }); });
+                    __walletLastSig = sigBg;
+                    return;
+                }
+                __renderWalletTabContentRaw();
+                __walletLastSig = _walletRenderSignature();
+            }
+            function __renderWalletTabContentRaw() {
                 const activeTab = document.querySelector('.wallet-tab.active')?.dataset.walletTab || 'overview';
                 const container = document.getElementById('walletTabContent');
                 if (!container) return;
@@ -9021,7 +9206,7 @@
                         </div>
                         <div class="wov-stat">
                             <div class="wov-stat-icon" style="background:rgba(34,197,94,0.12);color:#16a34a;">
-                                <i class="fas fa-coins"></i>
+                                ${usdtIconHTML('small')}
                             </div>
                             <div class="wov-stat-label">الأرباح المتاحة</div>
                             <div class="wov-stat-val" style="color:#16a34a;">${hidden ? '****' : '$' + todayProfit.toFixed(2)}</div>
@@ -10534,6 +10719,17 @@
             function applyServerUser(u, password) {
                 if (!u) return null;
                 const existing = getSavedAccount();
+                // Keep periodic synchronization visually silent. The screen is
+                // refreshed only when server-backed values actually changed.
+                const previousUiState = JSON.stringify({
+                    balance: existing && existing.balance,
+                    todayProfit: existing && existing.todayProfit,
+                    availableBalance: existing && existing.availableBalance,
+                    frozenBalance: existing && existing.frozenBalance,
+                    totalProfit: existing && existing.totalProfit,
+                    totalDeposits: existing && existing.totalDeposits,
+                    transactions: getWalletTransactions()
+                });
                 const acc = Object.assign({}, existing || {}, {
                     userId: (existing && existing.userId) || generateUserId(),
                     username: u.username || (existing && existing.username) || '',
@@ -10620,14 +10816,39 @@
                 try { applySheetDepositStatuses(acc.sheetDeposits); } catch (e) {}
 
                 try { applySheetSubscriptionStatuses(acc); } catch (e) {}
-                try { updateBalanceDisplay(); } catch (e) {}
-                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent(); } catch (e) {}
+                const current = getSavedAccount();
+                const currentUiState = JSON.stringify({
+                    balance: current && current.balance,
+                    todayProfit: current && current.todayProfit,
+                    availableBalance: current && current.availableBalance,
+                    frozenBalance: current && current.frozenBalance,
+                    totalProfit: current && current.totalProfit,
+                    totalDeposits: current && current.totalDeposits,
+                    transactions: getWalletTransactions()
+                });
+                if (currentUiState !== previousUiState) {
+                    try { updateBalanceDisplay(); } catch (e) {}
+                    // Never rebuild a hidden page. If the visible wallet changed,
+                    // update it once after the browser has painted, preserving scroll.
+                    const visibleWallet = document.getElementById('walletPage');
+                    if (visibleWallet && visibleWallet.classList.contains('active') && typeof renderWalletTabContent === 'function') {
+                        const scroller = visibleWallet.querySelector('.wallet-page-content, .page-scroll-area');
+                        const savedScrollTop = scroller ? scroller.scrollTop : 0;
+                        requestAnimationFrame(function () {
+                            renderWalletTabContent({ background: true });
+                            if (scroller) scroller.scrollTop = savedScrollTop;
+                        });
+                    }
+                }
                 return acc;
             }
 
             // ===== إعادة بناء كامل بيانات الحساب من جداول البيانات =====
             // الهدف: عند تسجيل الدخول من أي جهاز آخر تُحمَّل كل السجلات
             // (الإيداعات، السحوبات، الاشتراكات) من السحابة وليس من الجهاز.
+            function _rowHasDate(row) {
+                return !!(row && (row.ts || row.timestamp || row.date || row.createdAt || row.created_at || row.time || row.startedAt));
+            }
             function _sheetTs(row) {
                 if (!row) return Date.now();
                 var v = row.ts || row.timestamp || row.date || row.createdAt ||
@@ -10642,7 +10863,9 @@
             function _sheetKey(prefix, row, i) {
                 var id = row && (row.id || row.rowId || row.requestId || row.txid ||
                     row.transactionId || row.subscriptionId || row.hash);
-                return prefix + ':' + (id ? String(id) : (_sheetTs(row) + '-' + i));
+                if (id) return prefix + ':' + String(id);
+                // صف بلا معرّف: مفتاح ثابت لا يعتمد على الوقت الحالي حتى لا يتغيّر السجل في كل مزامنة
+                return prefix + ':' + (_rowHasDate(row) ? _sheetTs(row) : ('n' + (parseFloat(row && (row.amount || row.deposit)) || 0))) + '-' + i;
             }
             function _sheetStatusToTx(row, pendingStatus) {
                 if (isSheetApproved(row)) return 'done';
@@ -10721,6 +10944,7 @@
                             return false;
                         });
                         if (prev) {
+                            if (!_rowHasDate(row) && prev.ts) { tx.ts = prev.ts; if (prev.completedAt && tx.completedAt) tx.completedAt = prev.completedAt; }
                             tx.note = tx.note || prev.note || '';
                             if (prev.txidDeadline) tx.txidDeadline = prev.txidDeadline;
                             if (prev.status === 'awaiting_txid' && tx.status === 'review') tx.status = 'awaiting_txid';
@@ -10746,8 +10970,10 @@
                 });
 
                 merged.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+                var __prevTxJson = JSON.stringify(local);
+                if (JSON.stringify(merged) === __prevTxJson) return; // لا تغيير = لا إعادة رسم
                 saveWalletTransactions(merged);
-                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletTabContent')) renderWalletTabContent(); } catch (e) {}
+                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletTabContent')) renderWalletTabContent({ background: true }); } catch (e) {}
             }
 
             // إعادة بناء اشتراكات VIP من صفوف السحابة
@@ -10867,7 +11093,7 @@
                 try { updateBalanceDisplay(); } catch (e) {}
                 try {
                     if (typeof renderWalletTabContent === 'function' && document.getElementById('walletTabContent')) {
-                        renderWalletTabContent();
+                        renderWalletTabContent({ background: true });
                     }
                 } catch (e) {}
             }
@@ -11063,7 +11289,9 @@
                     __missingRowStrikes = 0;
                     if (enforceServerAccountState(r)) return null;
                     const full = await fetchAllUserRecords(cred.username, rec);
-                    return applyServerUser(full, cred.password);
+                    __walletBgRender = true;
+                    try { return applyServerUser(full, cred.password); }
+                    finally { __walletBgRender = false; }
                 } finally {
                     __sheetSyncBusy = false;
                 }
@@ -11665,7 +11893,7 @@
                 acc.availableBalance = +Math.max(parseFloat(acc._sheetAvailable) || 0, acc.todayProfit).toFixed(2);
                 saveAccount(acc);
                 try { updateBalanceDisplay(); } catch (e) {}
-                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent(); } catch (e) {}
+                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent({ background: true }); } catch (e) {}
                 return acc;
             }
             window.recomputeProfitsFromLedger = recomputeProfitsFromLedger;
@@ -11729,7 +11957,7 @@
                 _writeCreditedDailyProfits(credited);
                 saveAccount(acc);
                 try { updateBalanceDisplay(); } catch (e) {}
-                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent(); } catch (e) {}
+                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent({ background: true }); } catch (e) {}
             }
             window.applyApprovedDailyProfits = applyApprovedDailyProfits;
 
@@ -11754,7 +11982,7 @@
                 _writePendingSyncProfits(pending);
                 saveAccount(acc);
                 try { updateBalanceDisplay(); } catch (e) {}
-                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent(); } catch (e) {}
+                try { if (typeof renderWalletTabContent === 'function' && document.getElementById('walletPage')) renderWalletTabContent({ background: true }); } catch (e) {}
             }
             window.applyApprovedSyncProfits = applyApprovedSyncProfits;
 
@@ -11793,7 +12021,9 @@
                 if (!document.hidden) { try { restorePersistentSession(); } catch (e) {} }
             });
             window.addEventListener('pageshow', function () { try { restorePersistentSession(); } catch (e) {} });
-            setInterval(function() { if (isLoggedIn()) syncFromSheet(); }, 3000);
+            // Background sync is intentionally less aggressive to avoid needless
+            // network/DOM churn while the user keeps the home or history page open.
+            setInterval(function() { if (isLoggedIn() && !document.hidden) syncFromSheet(); }, 15000);
             document.addEventListener('visibilitychange', function() {
                 if (!document.hidden && isLoggedIn()) syncFromSheet();
             });
