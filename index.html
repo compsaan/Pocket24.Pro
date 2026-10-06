@@ -10624,7 +10624,7 @@
                     if (!Array.isArray(rows)) return;
                     rows.forEach(function (row, i) {
                         if (!row) return;
-                        try { if (isSyncProfitRow(row) || isWithdrawalRow(row)) return; } catch (e) {}
+                        try { if (isSyncProfitRow(row) || (type !== 'withdraw' && isWithdrawalRow(row))) return; } catch (e) {}
 
                         var tx = _txFromSheetRow(type, row, i);
                         if (serverKeys[tx.srvKey]) return;
