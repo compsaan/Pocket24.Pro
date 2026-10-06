@@ -5287,7 +5287,14 @@
         .auth-note i { color: #22c55e; }
         .auth-switch { text-align: center; margin-top: 16px; font-size: 13.5px; color: var(--text-muted); }
         .auth-switch .link { font-weight: 800; }
-</style>
+
+        /* Wallet scroll fix + delete button */
+        #walletTabContent{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px)) !important;overflow-y:auto !important;touch-action:pan-y;}
+        #walletTabContent .wtx-list{padding-bottom:24px;}
+        .wtx-item{position:relative;}
+        .wtx-del-btn{flex-shrink:0;width:34px;height:34px;border-radius:10px;border:none;background:rgba(239,68,68,.12);color:#dc2626;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;margin-inline-start:6px;z-index:2;}
+        .wtx-del-btn:active{transform:scale(.9);}
+    </style>
     <style>
         /* ── Mobile viewport and overflow safeguards ── */
         html, body {
@@ -8896,6 +8903,42 @@
                 document.body.appendChild(overlay);
             }
             document.addEventListener('click', function(e){
+                var del = e.target.closest('[data-wtx-del]');
+                if(!del) return;
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                var id = del.getAttribute('data-wtx-del');
+                if(!confirm('هل تريد حذف هذه العملية من السجل؟')) return;
+                var tx = getWalletTransactions().find(function(x){return String(x.id)===String(id);}) || {};
+                var item = del.closest('.wtx-item');
+                var finish = function(msg){
+                    saveWalletTransactions(getWalletTransactions().filter(function(x){return String(x.id)!==String(id);}));
+                    if(item){ item.style.transition='opacity .25s,transform .25s'; item.style.opacity='0'; item.style.transform='translateX(30px)'; }
+                    setTimeout(function(){ try{ renderWalletTabContent(); }catch(err){ if(item) item.remove(); } }, 250);
+                    try{ showToast(msg, true, 'info'); }catch(err){}
+                };
+                var cred = (typeof apiGetUser==='function') ? apiGetUser() : null;
+                if(!tx.txid || !cred || !cred.username || typeof apiPost!=='function'){
+                    finish('تم حذف العملية من السجل'); return;
+                }
+                del.disabled = true; del.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                apiPost({action:'deleteTransaction', username:cred.username, password:cred.password||'', txid:tx.txid})
+                    .then(function(r){
+                        if(r && (r.ok===true || r.status==='success')){
+                            try{
+                                if(r.balance!=null){ var a=getSavedAccount(); if(a){ a.balance=Number(r.balance)||0; saveAccount(a); try{updateBalanceDisplay();}catch(e5){} } }
+                            }catch(e2){}
+                            finish('تم حذف العملية نهائياً من السجل والجداول');
+                        } else {
+                            del.disabled=false; del.innerHTML='<i class="fas fa-trash-alt"></i>';
+                            try{ showToast((r&&r.message)||'تعذر حذف العملية من الجداول', true, 'error'); }catch(e3){}
+                        }
+                    })
+                    .catch(function(){
+                        del.disabled=false; del.innerHTML='<i class="fas fa-trash-alt"></i>';
+                        try{ showToast('تعذر الاتصال، حاول مرة أخرى', true, 'error'); }catch(e4){}
+                    });
+            }, true);
+            document.addEventListener('click', function(e){
                 var el = e.target.closest('.wtx-item[data-wtx-id]');
                 if(el){ openWalletTxDetail(el.getAttribute('data-wtx-id')); }
             });
@@ -8939,6 +8982,7 @@
                     +'</div>'
                     +'<span class="wtx-card-hint"><i class="fas fa-hand-pointer" style="font-size:9px;margin-left:3px;"></i> اضغط لعرض التفاصيل الكاملة</span>'
                     +'</div>'
+                    +'<button type="button" class="wtx-del-btn" data-wtx-del="'+(tx.id||'')+'" aria-label="حذف العملية"><i class="fas fa-trash-alt"></i></button>'
                     +'<span class="wtx-card-arrow" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>'
                     +'</div>';
             }
@@ -8995,7 +9039,7 @@
                         آخر المعاملات
                     </div>`
                     + (function(){
-                        var rec=getWalletTransactions().slice(0,5);
+                        var rec=getWalletTransactions();
                         if(!rec.length) return '<div class="wov-empty">'
                             +'<div class="wov-empty-icon"><i class="fas fa-receipt"></i></div>'
                             +'<div class="wov-empty-title">لا توجد معاملات</div>'
@@ -9244,15 +9288,27 @@
                         <i class="fas fa-exchange-alt"></i> ${t('transfer')}
                     </button>`;
 
-                    document.getElementById('submitInternalTransfer')?.addEventListener('click', () => {
-                        if (!document.getElementById('transferPassword').value) {
-                            showToast(t('passwordRequired'), true); return;
-                        }
+                    document.getElementById('submitInternalTransfer')?.addEventListener('click', async (ev) => {
+                        var _btn=ev.currentTarget;
+                        var _pw=document.getElementById('transferPassword').value;
+                        if (!_pw) { showToast(t('passwordRequired'), true); return; }
                         var _ta=parseFloat(document.getElementById('transferAmount')?.value||0);
-                        var _tr=document.getElementById('transferRecipient')?.value||'';
-                        addWalletTransaction({type:'transfer',amount:_ta,network:'داخلي',
-                            currency:'USDT',symbol:'$',status:'done',note:_tr});
-                        showToast(t('transferSuccess'), true);
+                        var _tr=(document.getElementById('transferRecipient')?.value||'').trim();
+                        if (!_tr || !(_ta>0)) { showToast('يرجى إدخال المستلم ومبلغ صحيح', true, 'error'); return; }
+                        var _cred=apiGetUser();
+                        if (!_cred || !_cred.username) { showToast('يرجى تسجيل الدخول أولاً', true, 'error'); return; }
+                        var _txid='TR-'+Date.now();
+                        apiButtonBusy(_btn, true, 'جارٍ إرسال الطلب...');
+                        var _r=await apiPost({action:'createTransfer', username:_cred.username, password:_pw,
+                            recipient:_tr, amount:_ta, txid:_txid, note:'تحويل إلى '+_tr});
+                        apiButtonBusy(_btn, false);
+                        if (!apiOk(_r)) { showToast(apiMsg(_r,'تعذر إرسال طلب التحويل'), true, 'error'); return; }
+                        addWalletTransaction({type:'transfer',direction:'out',amount:_ta,network:'داخلي',txid:_r.txid||_txid,
+                            currency:'USDT',symbol:'$',status:'review',note:'تحويل إلى '+_tr+' — بانتظار موافقة الإدارة'});
+                        document.getElementById('transferPassword').value='';
+                        document.getElementById('transferAmount').value='';
+                        showToast('تم إرسال طلب التحويل، بانتظار موافقة الإدارة', true, 'success');
+                        try { syncFromSheet(); } catch (e) {}
                     });
 
                 /* ════════════════ HISTORY ════════════════ */
@@ -10400,7 +10456,7 @@
             }
 
             // ==================== GOOGLE SHEETS API INTEGRATION (hidden) ====================
-            var API_TIMEOUT_MS = 8000;
+            var API_TIMEOUT_MS = 30000;
             function apiFetch(url, options) {
                 var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
                 var opts = Object.assign({}, options || {});
@@ -10426,12 +10482,13 @@
                     const res = await apiFetch(API_URL + '?' + qs, { method: 'GET', redirect: 'follow', cache: 'no-store' });
                     return JSON.parse(await res.text());
                 } catch (e) {
+                    if (!params.__r) { return apiGet(Object.assign({}, params, { __r: 1 })); }
                     return { ok: false, netError: true, message: 'تعذر الاتصال بالخادم' };
                 }
             }
 
             // POST actions supported by the sheet: login, register, createDeposit, changePassword
-            async function apiPost(payload) {
+            async function apiPost(payload, _retry) {
                 try {
                     const res = await apiFetch(API_URL, {
                         method: 'POST',
@@ -10443,6 +10500,7 @@
                     try { return JSON.parse(text); }
                     catch (e) { return { ok: false, message: 'استجابة غير صالحة من الخادم' }; }
                 } catch (e) {
+                    if (!_retry) { return apiPost(payload, true); }
                     return { ok: false, netError: true, message: 'تعذر الاتصال بالخادم، تحقق من الإنترنت' };
                 }
             }
@@ -10532,6 +10590,21 @@
                     // اعتماد أرباح التزامن الموافق عليها فقط (بعد حفظ الحساب حتى لا تُمسح أرباح اليوم)
                     __pendingApprovalRows = allDeposits;
                 }
+                // التحويل الداخلي الوارد المكتمل يُضاف إلى الهامش كعملية إيداع
+                if (Array.isArray(u.transfers)) {
+                    var __me = String(acc.username || '').trim().toLowerCase();
+                    var __tin = 0;
+                    u.transfers.forEach(function (r) {
+                        var code = String(r.statusCode || r.status || '').trim().toLowerCase();
+                        var ok = code === 'completed' || code === 'مكتمل' || code === 'approved';
+                        var dir = String(r.direction || '').toLowerCase();
+                        var to = String(r.to || '').trim().toLowerCase();
+                        var isIn = dir === 'in' || (!dir && __me && to === __me);
+                        if (ok && isIn) __tin += parseFloat(r.amount || 0) || 0;
+                    });
+                    acc.incomingTransfersTotal = __tin;
+                    acc.totalDeposits = (parseFloat(acc.totalDeposits || 0) || 0) + __tin;
+                }
                 if (!acc.referralCode) {
                     acc.referralCode = generateReferralCode();
                     acc.referralLink = 'https://compsaan.github.io/Pocket24.Pro/?ref=' + acc.referralCode;
@@ -10600,6 +10673,12 @@
                     note: row.note || row.adminNote || ''
                 };
                 if (status === 'done') tx.completedAt = _sheetTs(row);
+                if (type === 'transfer') {
+                    tx.direction = row.direction || '';
+                    tx.network = 'داخلي';
+                    var _who = row.direction === 'in' ? ('من ' + (row.from || '')) : ('إلى ' + (row.to || ''));
+                    tx.note = 'تحويل ' + _who + (status === 'done' ? '' : (status === 'failed' ? ' — مرفوض' : ' — بانتظار موافقة الإدارة'));
+                }
                 if (type === 'vip' && !tx.note) tx.note = 'اشتراك VIP — ' + (status === 'done' ? 'مفعل' : (status === 'failed' ? 'مرفوض' : 'بانتظار الموافقة'));
                 return tx;
             }
@@ -10610,7 +10689,8 @@
                 var groups = [
                     ['deposit', u.deposits],
                     ['withdraw', u.withdrawals || u.withdraws],
-                    ['vip', u.subscriptions]
+                    ['vip', u.subscriptions],
+                    ['transfer', u.transfers]
                 ];
                 var hasAny = groups.some(function (g) { return Array.isArray(g[1]) && g[1].length; });
                 if (!hasAny) return;
@@ -10989,7 +11069,7 @@
             function _pickRows(res) {
                 if (!res) return null;
                 if (Array.isArray(res)) return res;
-                const keys = ['deposits', 'withdrawals', 'withdraws', 'subscriptions', 'rows', 'data', 'list', 'items', 'records', 'result'];
+                const keys = ['deposits', 'withdrawals', 'withdraws', 'subscriptions', 'transfers', 'rows', 'data', 'list', 'items', 'records', 'result'];
                 for (let i = 0; i < keys.length; i++) {
                     const v = res[keys[i]];
                     if (Array.isArray(v)) return v;
@@ -11016,6 +11096,10 @@
                 if (!Array.isArray(out.withdrawals) && !Array.isArray(out.withdraws)) {
                     jobs.push(_fetchRows(username, ['getWithdrawals', 'getWithdraws', 'listWithdrawals', 'withdrawals'])
                         .then(function (rows) { if (rows) out.withdrawals = rows; }));
+                }
+                if (!Array.isArray(out.transfers)) {
+                    jobs.push(_fetchRows(username, ['getTransfers', 'listTransfers'])
+                        .then(function (rows) { if (rows) out.transfers = rows; }));
                 }
                 if (!Array.isArray(out.subscriptions)) {
                     jobs.push(_fetchRows(username, ['getSubscriptions', 'listSubscriptions', 'getVipSubscriptions', 'subscriptions'])
