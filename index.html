@@ -8911,6 +8911,7 @@
                 var tx = getWalletTransactions().find(function(x){return String(x.id)===String(id);}) || {};
                 var item = del.closest('.wtx-item');
                 var finish = function(msg){
+                    try{ if(tx.txid){ var hs=JSON.parse(localStorage.getItem(_wtxKey()+'_hidden')||'[]'); if(hs.indexOf(String(tx.txid).toUpperCase())<0){ hs.push(String(tx.txid).toUpperCase()); localStorage.setItem(_wtxKey()+'_hidden', JSON.stringify(hs)); } } }catch(eh){}
                     saveWalletTransactions(getWalletTransactions().filter(function(x){return String(x.id)!==String(id);}));
                     if(item){ item.style.transition='opacity .25s,transform .25s'; item.style.opacity='0'; item.style.transform='translateX(30px)'; }
                     setTimeout(function(){ try{ renderWalletTabContent(); }catch(err){ if(item) item.remove(); } }, 250);
@@ -8925,9 +8926,9 @@
                     .then(function(r){
                         if(r && (r.ok===true || r.status==='success')){
                             try{
-                                if(r.balance!=null){ var a=getSavedAccount(); if(a){ a.balance=Number(r.balance)||0; saveAccount(a); try{updateBalanceDisplay();}catch(e5){} } }
+                                /* الرصيد والهامش لا يتغيران عند الحذف من السجل */
                             }catch(e2){}
-                            finish('تم حذف العملية نهائياً من السجل والجداول');
+                            finish('تم حذف العملية من السجل وبقي رصيدك كما هو');
                         } else {
                             del.disabled=false; del.innerHTML='<i class="fas fa-trash-alt"></i>';
                             try{ showToast((r&&r.message)||'تعذر حذف العملية من الجداول', true, 'error'); }catch(e3){}
@@ -10705,6 +10706,9 @@
                     rows.forEach(function (row, i) {
                         if (!row) return;
                         try { if (isSyncProfitRow(row) || (type !== 'withdraw' && isWithdrawalRow(row))) return; } catch (e) {}
+                        // عمليات أخفاها المستخدم: تبقى محسوبة في الرصيد والهامش لكن لا تظهر في السجل
+                        if (row.hidden === true || String(row.hidden).toLowerCase() === 'true') return;
+                        try { var __hs = JSON.parse(localStorage.getItem(_wtxKey() + '_hidden') || '[]'); if (row.txid && __hs.indexOf(String(row.txid).toUpperCase()) !== -1) return; } catch (e) {}
 
                         var tx = _txFromSheetRow(type, row, i);
                         if (serverKeys[tx.srvKey]) return;
