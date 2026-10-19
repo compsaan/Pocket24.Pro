@@ -10666,15 +10666,36 @@
                         return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
                     }).join('&');
                     const res = await apiFetch(API_URL + '?' + qs, { method: 'GET', redirect: 'follow', cache: 'no-store' });
-                    return JSON.parse(await res.text());
+                    const text = await res.text();
+                    if (!res.ok) {
+                        return {
+                            ok: false,
+                            serverError: true,
+                            httpStatus: res.status,
+                            message: 'رفض خادم Apps Script الطلب (HTTP ' + res.status + '). أعد نشر التطبيق مع السماح بالوصول لأي مستخدم.'
+                        };
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (parseError) {
+                        return {
+                            ok: false,
+                            serverError: true,
+                            message: 'رابط Apps Script لا يعيد استجابة JSON. تحقق من رابط النشر وصلاحية الوصول العام.'
+                        };
+                    }
                 } catch (e) {
                     if (!params.__r) { return apiGet(Object.assign({}, params, { __r: 1 })); }
-                    return { ok: false, netError: true, message: 'تعذر الاتصال بالخادم' };
+                    return {
+                        ok: false,
+                        netError: true,
+                        message: 'تعذر الوصول إلى خدمة Google Apps Script. تحقق من نشرها كتطبيق ويب متاح لأي مستخدم، ثم افحص اتصال الإنترنت.'
+                    };
                 }
             }
 
             // POST actions supported by the sheet: login, register, createDeposit, changePassword
-            async function apiPost(payload, _retry) {
+            async function apiPost(payload) {
                 try {
                     const res = await apiFetch(API_URL, {
                         method: 'POST',
@@ -10683,11 +10704,30 @@
                         body: JSON.stringify(payload)
                     });
                     const text = await res.text();
+                    if (!res.ok) {
+                        return {
+                            ok: false,
+                            serverError: true,
+                            httpStatus: res.status,
+                            message: 'رفض خادم Apps Script الطلب (HTTP ' + res.status + '). أعد نشر التطبيق مع السماح بالوصول لأي مستخدم.'
+                        };
+                    }
                     try { return JSON.parse(text); }
-                    catch (e) { return { ok: false, message: 'استجابة غير صالحة من الخادم' }; }
+                    catch (e) {
+                        return {
+                            ok: false,
+                            serverError: true,
+                            message: 'رابط Apps Script لا يعيد استجابة JSON. تحقق من رابط النشر وصلاحية الوصول العام.'
+                        };
+                    }
                 } catch (e) {
-                    if (!_retry) { return apiPost(payload, true); }
-                    return { ok: false, netError: true, message: 'تعذر الاتصال بالخادم، تحقق من الإنترنت' };
+                    // لا نعيد POST تلقائياً: قد يكون الخادم نفذ الطلب قبل انقطاع الرد،
+                    // وإعادة الإرسال قد تكرر عملية التسجيل أو المعاملة.
+                    return {
+                        ok: false,
+                        netError: true,
+                        message: 'لم يصل رد من خدمة Google Apps Script. تحقق من نشرها وإتاحة الوصول لأي مستخدم قبل إعادة المحاولة.'
+                    };
                 }
             }
 
