@@ -1222,6 +1222,7 @@
         .wtx-hero-status.done    { background:rgba(22,163,74,.11); color:#15803d; }
         .wtx-hero-status.pending { background:rgba(245,158,11,.13); color:#b45309; }
         .wtx-hero-status.failed  { background:rgba(239,68,68,.12); color:#dc2626; }
+        .wtx-hero-status.cancelled, .wtx-hero-status.canceled { background:rgba(100,116,139,.12); color:#64748b; }
         .wtx-hero-status i { font-size:13px; }
         .wtx-detail-summary {
             display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
@@ -5084,6 +5085,41 @@
              line-height: 1.65;
              margin: 0 0 14px;
          }
+          .txid-deadline {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              margin: -3px 0 14px;
+              padding: 11px 13px;
+              border: 1px solid rgba(37,99,235,.18);
+              border-radius: 13px;
+              color: var(--text-secondary);
+              background: linear-gradient(135deg,rgba(37,99,235,.08),rgba(14,165,233,.06));
+              font-size: 11px;
+          }
+          .txid-deadline-label {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              line-height: 1.5;
+          }
+          .txid-deadline-label i { color: #2563eb; }
+          .txid-deadline-value {
+              flex: 0 0 auto;
+              color: #2563eb;
+              direction: ltr;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 16px;
+              font-weight: 900;
+              font-variant-numeric: tabular-nums;
+          }
+          .txid-deadline.is-urgent {
+              border-color: rgba(220,38,38,.25);
+              background: rgba(239,68,68,.07);
+          }
+          .txid-deadline.is-urgent .txid-deadline-label i,
+          .txid-deadline.is-urgent .txid-deadline-value { color: #dc2626; }
          .txid-amount-row {
              display: flex;
              justify-content: space-between;
@@ -5098,20 +5134,6 @@
              font-size: 12px;
          }
          .txid-amount-row strong { color: #2563eb; font-size: 16px; }
-          .txid-recent-note {
-              display: flex;
-              align-items: flex-start;
-              gap: 9px;
-              background: linear-gradient(135deg, rgba(37,99,235,0.09), rgba(14,165,233,0.07));
-              border: 1px solid rgba(37,99,235,0.18);
-              border-radius: 14px;
-              padding: 11px 13px;
-              margin-bottom: 14px;
-              color: var(--text-muted);
-              font-size: 11px;
-              line-height: 1.55;
-          }
-          .txid-recent-note i { color: #2563eb; margin-top: 2px; }
          .txid-input {
              width: 100%;
              box-sizing: border-box;
@@ -5160,6 +5182,93 @@
              font-size: 12px;
              line-height: 1.55;
          }
+          .txid-cancel-section {
+              margin-top: 18px;
+              padding-top: 15px;
+              border-top: 1px solid var(--border-color);
+          }
+          .txid-cancel-btn {
+              width: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+              padding: 11px 14px;
+              border: 1px solid rgba(220,38,38,.22);
+              border-radius: 13px;
+              color: #b91c1c;
+              background: rgba(239,68,68,.06);
+              font-family: inherit;
+              font-size: 12px;
+              font-weight: 800;
+              cursor: pointer;
+              transition: background .18s ease, transform .18s ease;
+          }
+          .txid-cancel-btn:hover { background: rgba(239,68,68,.11); }
+          .txid-cancel-btn:active { transform: scale(.985); }
+          .txid-cancel-confirm {
+              margin-top: 10px;
+              padding: 12px;
+              border: 1px solid rgba(245,158,11,.24);
+              border-radius: 13px;
+              background: rgba(245,158,11,.07);
+          }
+          .txid-cancel-confirm[hidden] { display: none; }
+          .txid-cancel-confirm p {
+              margin: 0 0 11px;
+              color: var(--text-secondary);
+              font-size: 11px;
+              line-height: 1.7;
+          }
+          .txid-cancel-actions { display: flex; gap: 8px; }
+          .txid-cancel-actions button {
+              flex: 1;
+              min-height: 40px;
+              border-radius: 10px;
+              font-family: inherit;
+              font-size: 11px;
+              font-weight: 800;
+              cursor: pointer;
+          }
+          .txid-cancel-keep {
+              color: var(--text-secondary);
+              background: var(--card-bg);
+              border: 1px solid var(--border-color);
+          }
+          .txid-cancel-confirm-btn {
+              color: #fff;
+              background: linear-gradient(135deg,#ef4444,#b91c1c);
+              border: 1px solid #dc2626;
+              box-shadow: 0 4px 12px rgba(220,38,38,.18);
+          }
+          .txid-cancelled {
+              display: flex;
+              align-items: flex-start;
+              gap: 11px;
+              margin-bottom: 14px;
+              padding: 13px;
+              border: 1px solid rgba(100,116,139,.18);
+              border-radius: 14px;
+              color: var(--text-secondary);
+              background: rgba(100,116,139,.06);
+          }
+          .txid-cancelled i {
+              flex: 0 0 auto;
+              margin-top: 2px;
+              color: #64748b;
+          }
+          .txid-cancelled strong {
+              display: block;
+              margin-bottom: 4px;
+              color: var(--text-primary);
+              font-size: 13px;
+          }
+          .txid-cancelled p {
+              margin: 0;
+              color: var(--text-muted);
+              font-size: 11px;
+              line-height: 1.65;
+          }
          .wtx-txid {
              display: inline-flex;
              align-items: center;
@@ -5175,10 +5284,7 @@
          }
          .wtx-status.awaiting_txid, .wtx-status.review { color: #b45309; background: rgba(245,158,11,0.12); }
          .wtx-status.expired { color: #b91c1c; background: rgba(239,68,68,0.10); }
-         @media (max-width: 360px) {
-             .txid-recent-note { align-items: flex-start; }
-         }
-
+          .wtx-status.cancelled, .wtx-status.canceled { color: #64748b; background: rgba(100,116,139,.12); }
         /* ═══ Modern auth (login / signup) ═══ */
         .auth-sheet {
             position: relative;
@@ -7868,8 +7974,8 @@
               // The deadline is persisted on each transaction, so it survives
               // closing and reopening the page. It is intentionally not shown
               // as a countdown: the user only sees that the request is recent
-              // and remains available for up to 48 hours.
-              var TXID_ENTRY_WINDOW_MS = 48 * 60 * 60 * 1000;
+              // and remains available for up to 30 minutes.
+              var TXID_ENTRY_WINDOW_MS = 30 * 60 * 1000;
 
              function getActiveDepositRequest() {
                  var txs = getWalletTransactions();
@@ -7902,13 +8008,13 @@
                  var updated = updateWalletTransaction(tx.id, {
                      status: 'expired',
                      expiredAt: Date.now(),
-                      note: 'انتهت مهلة إدخال TXID البالغة 48 ساعة'
+                        note: 'انتهت مهلة إدخال TXID البالغة 30 دقيقة'
                  });
                  if (updated) {
                      addUserNotification({
                          type: 'deposit-txid-expired',
                          title: 'انتهت مهلة تأكيد الإيداع',
-                          body: 'لم يتم إدخال TXID خلال 48 ساعة، ولم تتم إضافة أي رصيد.',
+                            body: 'لم يتم إدخال TXID خلال 30 دقيقة، ولم تتم إضافة أي رصيد.',
                          icon: 'fas fa-hourglass-end',
                          color: 'linear-gradient(135deg,#ef4444,#b91c1c)'
                      });
@@ -8035,10 +8141,11 @@
 
               function validateDepositTxid(tx, txid) {
                  var value = String(txid || '').trim();
-                 if (!tx || tx.status !== 'awaiting_txid') return 'هذا الطلب غير متاح. ابدأ طلب إيداع جديد.';
-                 if (Date.now() >= Number(tx.txidDeadline || 0)) {
-                     expireDepositTxidRequest(tx);
-                       return 'انتهت مهلة إدخال TXID البالغة 48 ساعة. لم يتم إضافة أي رصيد.';
+                  var liveTx = tx && getWalletTransactions().find(function(item) { return item.id === tx.id; });
+                  if (!liveTx || liveTx.status !== 'awaiting_txid') return 'هذا الطلب غير متاح. ابدأ طلب إيداع جديد.';
+                  if (Date.now() >= Number(liveTx.txidDeadline || 0)) {
+                      expireDepositTxidRequest(liveTx);
+                        return 'انتهت مهلة إدخال TXID البالغة 30 دقيقة. لم يتم إضافة أي رصيد.';
                  }
                  if (!/^[A-Za-z0-9_-]{16,128}$/.test(value)) {
                      return 'TXID غير صالح. أدخل الرمز الكامل كما يظهر في مستكشف الشبكة.';
@@ -8080,16 +8187,49 @@
                  return { ok: true, tx: completed };
              }
 
-             function renderDepositTxidConfirmation(container, tx, onAccepted) {
+              var _depositTxidCountdownTimer = null;
+              function renderDepositTxidConfirmation(container, tx, onAccepted) {
                  if (!container || !tx) return;
+                  if (_depositTxidCountdownTimer) {
+                      clearInterval(_depositTxidCountdownTimer);
+                      _depositTxidCountdownTimer = null;
+                  }
+                  var stopCountdown = function() {
+                      if (_depositTxidCountdownTimer) {
+                          clearInterval(_depositTxidCountdownTimer);
+                          _depositTxidCountdownTimer = null;
+                      }
+                  };
                  var renderExpired = function() {
+                      stopCountdown();
                      container.innerHTML =
                          '<div class="txid-flow-card">'
                          + '<div class="txid-expired"><i class="fas fa-hourglass-end" style="margin-left:5px;"></i> انتهت مهلة إدخال TXID. لم يتم إضافة أي رصيد إلى حسابك.</div>'
                          + '</div>';
                  };
+                  var renderCancelled = function() {
+                       stopCountdown();
+                      container.innerHTML =
+                          '<div class="txid-flow-card" dir="rtl">'
+                          + '<div class="txid-cancelled" role="status"><i class="fas fa-ban" aria-hidden="true"></i><div><strong>تم إلغاء طلب الإيداع</strong><p>أُلغي الطلب من التطبيق وبقي في سجل العمليات بحالة «ملغي». إذا أرسلت المبلغ على الشبكة، فإن إلغاء الطلب لا يعكس التحويل.</p></div></div>'
+                          + '<button type="button" class="wbtn-submit blue" id="restartDepositAfterCancelBtn"><i class="fas fa-plus-circle"></i> إنشاء طلب إيداع جديد</button>'
+                          + '</div>';
+                      var restartBtn = document.getElementById('restartDepositAfterCancelBtn');
+                      restartBtn?.addEventListener('click', function() {
+                          try {
+                              if (container.id === 'depositNetworkContent' && typeof updateDepositModalContent === 'function')
+                                  updateDepositModalContent();
+                              else
+                                  renderWalletTabContent();
+                          } catch (e) {}
+                      });
+                  };
+                  if (tx.status === 'cancelled' || tx.status === 'canceled') {
+                      renderCancelled();
+                      return;
+                  }
                   var deadline = Number(tx.txidDeadline || 0);
-                  if (deadline && Date.now() >= deadline) {
+                  if (!deadline || Date.now() >= deadline) {
                      expireDepositTxidRequest(tx);
                      renderExpired();
                      return;
@@ -8098,16 +8238,96 @@
                      '<div class="txid-flow-card" dir="rtl">'
                      + '<div class="txid-flow-badge"><i class="fas fa-shield-alt"></i> تأكيد الإيداع</div>'
                      + '<h3 class="txid-flow-title">أدخل رمز المعاملة TXID</h3>'
-                      + '<p class="txid-flow-sub">بعد تأكيد الشحن، أدخل TXID الكامل خلال 48 ساعة ليتم إرسال الطلب إلى الإدارة.</p>'
+                        + '<p class="txid-flow-sub">أدخل TXID الصحيح خلال 30 دقيقة من إنشاء الطلب لإرساله إلى الإدارة للمراجعة.</p>'
+                      + '<div class="txid-deadline" id="depositTxidCountdown" role="timer" aria-label="الوقت المتبقي لإدخال TXID">'
+                      + '<span class="txid-deadline-label"><i class="fas fa-hourglass-half" aria-hidden="true"></i><span>المهلة المتبقية لإدخال TXID</span></span>'
+                      + '<strong class="txid-deadline-value" dir="ltr">30:00</strong>'
+                      + '</div>'
                      + '<div class="txid-amount-row"><span>المبلغ المطلوب تأكيده</span><strong>$' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT</strong></div>'
-                      + '<div class="txid-recent-note"><i class="fas fa-calendar-check"></i><span>يُقبل أي رمز معاملة (حتى القديم) بشرط أن تكون كميته على الشبكة مساوية للمبلغ المطلوب إيداعه. لا يُرسل الطلب إلى جداول البيانات إلا بعد قبول الرمز.</span></div>'
                      + '<div class="input-group" style="text-align:right;margin-bottom:10px;">'
                      + '<label for="depositTxidInput" style="display:block;margin-bottom:6px;color:var(--text-muted);">رمز المعاملة TXID</label>'
                      + '<input class="input-field txid-input" type="text" id="depositTxidInput" inputmode="text" autocomplete="off" spellcheck="false" maxlength="128" placeholder="ألصق TXID الكامل هنا">'
                      + '</div>'
                      + '<div class="txid-error" id="depositTxidError" role="alert"></div>'
                      + '<button class="wbtn-submit blue" id="submitDepositTxidBtn" style="margin-top:14px;"><i class="fas fa-check-double"></i> إرسال TXID للمراجعة</button>'
+                      + '<div class="txid-cancel-section">'
+                      + '<button type="button" class="txid-cancel-btn" id="cancelDepositRequestBtn" aria-expanded="false" aria-controls="cancelDepositConfirm"><i class="fas fa-times-circle"></i> إلغاء طلب الإيداع</button>'
+                      + '<div class="txid-cancel-confirm" id="cancelDepositConfirm" role="group" aria-label="تأكيد إلغاء طلب الإيداع" hidden>'
+                      + '<p>هل تريد إلغاء هذا الطلب؟ لن تتم إضافة أي رصيد، وإذا أرسلت المبلغ على الشبكة فلن يعكس هذا الإجراء التحويل.</p>'
+                      + '<div class="txid-cancel-actions"><button type="button" class="txid-cancel-keep" id="keepDepositRequestBtn">الاحتفاظ بالطلب</button><button type="button" class="txid-cancel-confirm-btn" id="confirmCancelDepositBtn">تأكيد الإلغاء</button></div>'
+                      + '</div></div>'
                      + '</div>';
+                  var updateCountdown = function() {
+                      var countdown = container.querySelector('#depositTxidCountdown');
+                      var countdownValue = countdown && countdown.querySelector('.txid-deadline-value');
+                      if (!countdown || !countdownValue) {
+                          stopCountdown();
+                          return false;
+                      }
+                      var remainingMs = deadline - Date.now();
+                      if (remainingMs <= 0) {
+                          var latestAtExpiry = getWalletTransactions().find(function(item) { return item.id === tx.id; });
+                          if (!latestAtExpiry || latestAtExpiry.status !== 'awaiting_txid') {
+                              stopCountdown();
+                              if (latestAtExpiry && (latestAtExpiry.status === 'cancelled' || latestAtExpiry.status === 'canceled')) {
+                                  tx.status = latestAtExpiry.status;
+                                  renderCancelled();
+                              }
+                              return false;
+                          }
+                          expireDepositTxidRequest(latestAtExpiry);
+                          renderExpired();
+                          showToast('انتهت مهلة إدخال TXID وأُغلق طلب الإيداع.', true, 'error');
+                          return false;
+                      }
+                      var totalSeconds = Math.ceil(remainingMs / 1000);
+                      var minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                      var seconds = String(totalSeconds % 60).padStart(2, '0');
+                      countdownValue.textContent = minutes + ':' + seconds;
+                      countdown.setAttribute('aria-label', 'الوقت المتبقي لإدخال TXID: ' + minutes + ':' + seconds);
+                      countdown.classList.toggle('is-urgent', remainingMs <= 5 * 60 * 1000);
+                      return true;
+                  };
+                  if (updateCountdown()) _depositTxidCountdownTimer = setInterval(updateCountdown, 1000);
+                  var cancelBtn = document.getElementById('cancelDepositRequestBtn');
+                  var cancelConfirm = document.getElementById('cancelDepositConfirm');
+                  var keepBtn = document.getElementById('keepDepositRequestBtn');
+                  var confirmCancelBtn = document.getElementById('confirmCancelDepositBtn');
+                  cancelBtn?.addEventListener('click', function() {
+                      if (cancelConfirm) cancelConfirm.hidden = false;
+                      cancelBtn.setAttribute('aria-expanded', 'true');
+                      confirmCancelBtn?.focus();
+                  });
+                  keepBtn?.addEventListener('click', function() {
+                      if (cancelConfirm) cancelConfirm.hidden = true;
+                      cancelBtn?.setAttribute('aria-expanded', 'false');
+                      cancelBtn?.focus();
+                  });
+                  confirmCancelBtn?.addEventListener('click', function() {
+                      var latest = getWalletTransactions().find(function(item) { return item.id === tx.id; });
+                      if (!latest || latest.status !== 'awaiting_txid') {
+                          showToast('هذا الطلب لم يعد متاحاً للإلغاء.', true, 'error');
+                          return;
+                      }
+                      if (Date.now() >= Number(latest.txidDeadline || 0)) {
+                          expireDepositTxidRequest(latest);
+                          renderExpired();
+                          showToast('انتهت مهلة إدخال TXID لهذا الطلب.', true, 'error');
+                          return;
+                      }
+                      var cancelled = updateWalletTransaction(tx.id, {
+                          status: 'cancelled',
+                          cancelledAt: Date.now(),
+                          note: 'ألغى المستخدم طلب الإيداع قبل إرسال TXID'
+                      });
+                      if (!cancelled) {
+                          showToast('تعذر إلغاء الطلب. حاول مرة أخرى.', true, 'error');
+                          return;
+                      }
+                      tx.status = 'cancelled';
+                      renderCancelled();
+                      showToast('تم إلغاء طلب الإيداع. يمكنك إنشاء طلب جديد.', true, 'success');
+                  });
                  document.getElementById('submitDepositTxidBtn')?.addEventListener('click', async function() {
                      var submitBtn = this;
                      var txidInput = document.getElementById('depositTxidInput');
@@ -8134,6 +8354,7 @@
                      if (!check || !check.ok) { showErr((check && check.error) || 'تعذر التحقق من رمز المعاملة.'); return; }
                       var result = creditDepositFromTxid(tx, entered);
                      if (!result.ok) { showErr(result.error); return; }
+                      stopCountdown();
                      /* قُبل الرمز من المنصة → الآن فقط يُرسل الأمر إلى جداول البيانات */
                      try {
                          if (typeof submitDepositApprovalRequest === 'function') {
@@ -8783,14 +9004,17 @@
                          var depositDeadline = (tx.ts || Date.now()) + TXID_ENTRY_WINDOW_MS;
                          tx.status = Date.now() < depositDeadline ? 'awaiting_txid' : 'expired';
                          tx.txidDeadline = depositDeadline;
-                          if(tx.status === 'expired') tx.note = 'انتهت مهلة إدخال TXID البالغة 48 ساعة';
+                            if(tx.status === 'expired') tx.note = 'انتهت مهلة إدخال TXID البالغة 30 دقيقة';
                          changed=true;
                      }
-                    if(tx.type==='deposit' && tx.status==='awaiting_txid' &&
-                        (!tx.txidDeadline || (Number(tx.txidDeadline) - Number(tx.ts || 0)) < TXID_ENTRY_WINDOW_MS)){
-                        tx.txidDeadline = Date.now() + TXID_ENTRY_WINDOW_MS;
-                        tx.note = 'رمز المعاملة حديث وصالح لمدة تصل إلى 48 ساعة';
-                        changed=true;
+                    if(tx.type==='deposit' && tx.status==='awaiting_txid'){
+                        var depositCreatedAt = Number(tx.ts || Date.now());
+                        var maxDepositDeadline = depositCreatedAt + TXID_ENTRY_WINDOW_MS;
+                        if(!tx.txidDeadline || Number(tx.txidDeadline) > maxDepositDeadline){
+                            tx.txidDeadline = maxDepositDeadline;
+                             tx.note = 'رمز المعاملة صالح لمدة تصل إلى 30 دقيقة';
+                            changed=true;
+                        }
                     }
                     if(typeof tx.note==='string' && tx.note.indexOf('تمت مطابقة TXID محلياً')===0){
                         tx.note='';
@@ -8937,7 +9161,7 @@
             function openWalletTxDetail(id){
                 var tx = getWalletTransactions().find(function(x){return x.id===id;});
                 if(!tx) return;
-                 var SL={pending:'قيد المعالجة',awaiting_txid:'بانتظار TXID',review:'بانتظار موافقة الإدارة',expired:'منتهي',done:'مكتمل',completed:'مكتمل',failed:'فشل'};
+                 var SL={pending:'قيد المعالجة',awaiting_txid:'بانتظار TXID',review:'بانتظار موافقة الإدارة',expired:'منتهي',cancelled:'ملغي',canceled:'ملغي',done:'مكتمل',completed:'مكتمل',failed:'فشل'};
                 var overlay = document.createElement('div');
                 overlay.className = 'wtx-detail-overlay';
                 var typeClass = tx.type==='deposit' ? 'dep' : (tx.type==='withdraw' ? 'wd' : 'tr');
@@ -8946,7 +9170,7 @@
                 var amtNum = parseFloat(tx.amount||0).toFixed(2);
                 var statusKey = tx.status==='completed' ? 'done' : (tx.status||'pending');
                 if(tx.type==='withdraw' && statusKey==='pending'){ SL.pending = 'سحب معلق'; }
-                var statusIcon = statusKey==='done' ? 'fa-check-circle' : (statusKey==='failed' ? 'fa-times-circle' : 'fa-clock');
+                var statusIcon = statusKey==='done' ? 'fa-check-circle' : ((statusKey==='failed' || statusKey==='cancelled' || statusKey==='canceled') ? 'fa-times-circle' : 'fa-clock');
                 var heroIconHTML = tx.type==='deposit'
                     ? usdtIconHTML('hero')
                     : (tx.type==='withdraw'
@@ -8960,7 +9184,8 @@
                 var isPending = statusKey === 'pending';
                  var isAwaitingTxid = statusKey === 'awaiting_txid';
                  var isExpired = statusKey === 'expired';
-                var isFailed = statusKey === 'failed';
+                var isCancelled = statusKey === 'cancelled' || statusKey === 'canceled';
+                var isFailed = statusKey === 'failed' || isCancelled;
                 var isDone = statusKey === 'done';
                 var dateCreated = _wtxFmt(tx.ts);
                 var dateCompleted = tx.completedAt ? _wtxFmt(tx.completedAt) : 'لم تكتمل بعد';
@@ -9009,7 +9234,7 @@
                     +      '<div class="wtx-timeline-progress" style="width:'+progressWidth+';"></div>'
                     +      '<div class="wtx-step done"><div class="wtx-step-dot"><i class="fas fa-check"></i></div><span>تم الإنشاء</span></div>'
                     +      '<div class="wtx-step '+stepTwoClass+'"><div class="wtx-step-dot"><i class="fas '+stepTwoIcon+'"></i></div><span>'+escapeHtml(stepTwoLabel)+'</span></div>'
-                     +      '<div class="wtx-step '+(isDone?'done':(isFailed || isExpired?'failed':'active'))+'"><div class="wtx-step-dot"><i class="fas '+(isDone?'fa-check':(isFailed || isExpired?'fa-times':'fa-lock'))+'"></i></div><span>'+ (isDone?'مكتملة':(isFailed || isExpired?'منتهية':'بانتظار TXID')) +'</span></div>'
+                     +      '<div class="wtx-step '+(isDone?'done':(isFailed || isExpired?'failed':'active'))+'"><div class="wtx-step-dot"><i class="fas '+(isDone?'fa-check':(isFailed || isExpired?'fa-times':'fa-lock'))+'"></i></div><span>'+ (isDone?'مكتملة':(isCancelled?'ملغاة':(isFailed || isExpired?'منتهية':'بانتظار TXID'))) +'</span></div>'
                     +    '</div>'
                     +  '</div>'
                     +  '<div class="wtx-detail-divider"></div>'
@@ -9110,7 +9335,7 @@
                          transfer:{l:'تحويل',i:'fas fa-exchange-alt',c:'tr',a:'neu',s:'⇄'},
                          vip:{l:'اشتراك VIP',i:'fas fa-crown',c:'vip',a:'neg',s:'−'}};
                  var SM={pending:{l:'قيد المعالجة',c:'pending'},awaiting_txid:{l:'بانتظار TXID',c:'awaiting_txid'},review:{l:'بانتظار موافقة الإدارة',c:'awaiting_txid'},
-                         expired:{l:'منتهي',c:'expired'},
+                         expired:{l:'منتهي',c:'expired'},cancelled:{l:'ملغي',c:'cancelled'},canceled:{l:'ملغي',c:'canceled'},
                         done:{l:'مكتمل',c:'done'},completed:{l:'مكتمل',c:'done'},failed:{l:'فشل',c:'failed'}};
                 var ti=TM[tx.type]||TM.deposit;
                 var si=SM[tx.status]||SM.pending;
@@ -9320,7 +9545,7 @@
                              }
                             try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch(e) {}
                             if (_amtEl) _amtEl.value='';
-                             showToast('تم استلام طلب الإيداع — أدخل TXID خلال 48 ساعة', true, 'success');
+                               showToast('تم استلام طلب الإيداع — أدخل TXID خلال 30 دقيقة', true, 'success');
                              try {
                                  renderDepositTxidConfirmation(container, _request.tx, function(tx) {
                                      showToast('تم إرسال TXID لمبلغ $' + parseFloat(tx.amount || 0).toFixed(2) + ' USDT إلى جداول البيانات — بانتظار موافقة الإدارة', true, 'info');
@@ -9523,7 +9748,7 @@
                         list.sort(function(a,b){ return _hSort==='asc' ? (a.ts-b.ts) : (b.ts-a.ts); });
                         var el=container.querySelector('.wtx-hist-list');
                         if(!el)return;
-                        var visibleDeposits=list.filter(function(tx){return tx.type==='deposit';})
+                        var visibleDeposits=list.filter(function(tx){return tx.type==='deposit' && tx.status!=='cancelled' && tx.status!=='canceled';})
                             .reduce(function(sum,tx){return sum+parseFloat(tx.amount||0);},0);
                         var visibleWithdrawals=list.filter(function(tx){return tx.type==='withdraw';})
                             .reduce(function(sum,tx){return sum+parseFloat(tx.amount||0);},0);
